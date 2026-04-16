@@ -2,7 +2,7 @@
 
 A single-file morning-briefing dashboard for Toronto — live weather, sports, events, and coffee picks, rendered in one page.
 
-🔗 **Live:** [add your Netlify URL here once deployed]
+🔗 **Live:** [toronto-dashboard.netlify.app](https://toronto-dashboard.netlify.app/)
 
 ## What it does
 
