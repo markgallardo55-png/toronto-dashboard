@@ -565,6 +565,32 @@ function modeWc(arr){
   return best;
 }
 
+// Worst-case weathercode in an array — picks whichever hourly code carries
+// the biggest walk-score penalty. Used so a single rainy hour in an otherwise
+// cloudy window still gets surfaced (rather than averaged away).
+function worstWc(arr){
+  // Severity order matches the penalties in walkScore() — higher index = worse
+  const rank = wc => {
+    if([95,96,99].includes(wc)) return 9;             // thunderstorm
+    if([65,75,82,86].includes(wc)) return 8;          // heavy rain/snow showers
+    if([61,71,80,85].includes(wc)) return 7;          // rain/snow/showers
+    if([63,73,81].includes(wc)) return 6;             // moderate rain/snow
+    if([45,48].includes(wc)) return 5;                // fog
+    if([51,53,55,77].includes(wc)) return 4;          // drizzle, snow grains
+    if([56,57,66,67].includes(wc)) return 4;          // freezing drizzle/rain
+    if(wc===3) return 3;                              // overcast
+    if(wc===1||wc===2) return 2;                      // partly cloudy
+    if(wc===0) return 1;                              // clear
+    return 0;
+  };
+  let worst = arr[0]||0, worstRank = rank(worst);
+  for(const w of arr){
+    const r = rank(w);
+    if(r > worstRank){ worstRank = r; worst = w; }
+  }
+  return worst;
+}
+
 // Short weekday label for card header ("Fri", "Sat", …) or "Today" for index 0
 function dayLabel(dateStr, idx){
   if(idx===0) return "Today";
@@ -587,17 +613,19 @@ function buildDaysFromOpenMeteo(data){
       if(h.time[j].startsWith(date)) hourIdx.push(j);
     }
     // Split into Morning (6–12), Afternoon (12–18), Evening (18–22)
+    // Use worst-case (max) for wind/precip/weathercode so rain-during-1-hour
+    // doesn't get hidden by 5 dry hours. Temp stays as average — it's a smooth metric.
     const slot = (from, to) => {
       const idx = hourIdx.filter(j=>{
         const hr = parseInt(h.time[j].slice(11,13),10);
         return hr>=from && hr<to;
       });
       const temp = avg(idx.map(j=>h.temperature_2m[j]));
-      const wind = avg(idx.map(j=>h.windspeed_10m[j]));
-      const precip = avg(idx.map(j=>h.precipitation_probability[j]||0));
-      const wc = modeWc(idx.map(j=>h.weathercode[j]));
+      const wind = Math.max(0, ...idx.map(j=>h.windspeed_10m[j]));
+      const precip = Math.max(0, ...idx.map(j=>h.precipitation_probability[j]||0));
+      const wc = worstWc(idx.map(j=>h.weathercode[j]));
       const ic = wcToIconCond(wc);
-      return {temp,wind,precip,weathercode:wc,icon:ic.icon,condition:ic.cond};
+      return {temp,wind:Math.round(wind),precip:Math.round(precip),weathercode:wc,icon:ic.icon,condition:ic.cond};
     };
     const m = slot(6,12), a = slot(12,18), e = slot(18,22);
 
