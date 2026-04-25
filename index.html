@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="color-scheme" content="light only"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Toronto"/>
+<title>Toronto Weather</title>
+<style>
+:root{color-scheme:light only;--bg-000:rgb(255,255,255);--bg-100:rgb(250,249,245);--bg-200:rgb(245,244,237);--bg-300:rgb(240,238,230);--bg-400:rgb(232,230,220);--text-100:rgb(20,20,19);--text-200:rgb(61,61,58);--text-400:rgb(115,114,108);--border:rgba(31,30,29,0.12);--border-med:rgba(31,30,29,0.18);--border-strong:rgba(31,30,29,0.28);--danger:rgb(181,51,51);--danger-bg:rgba(181,51,51,0.08);--danger-border:rgba(181,51,51,0.25);--accent-coral:rgb(207,92,54);--font:"Anthropic Sans",system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--radius-sm:8px;--radius-md:12px;--radius-lg:16px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;background:#faf9f5 !important;color:#141413 !important}
+body{font-family:var(--font);background:#faf9f5 !important;color:#141413 !important;min-height:100vh;padding:40px 20px 80px;-webkit-text-size-adjust:100%}
+.wrap{max-width:900px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:20px;border-bottom:1px solid var(--border-strong);margin-bottom:24px;gap:12px}
+.city{font-size:clamp(48px,9vw,88px);font-weight:700;letter-spacing:-2px;line-height:.9;color:var(--text-100)}
+.region{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-400);margin-top:6px}
+.cur-block{text-align:right}
+.cur-temp{font-size:clamp(40px,7vw,72px);font-weight:300;line-height:1;color:var(--text-100);letter-spacing:-1px}
+.cur-cond{font-size:14px;color:var(--text-200);margin-top:4px}
+.cur-wind{font-size:11px;color:var(--text-400);margin-top:2px;letter-spacing:.5px}
+.section-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-400);margin-bottom:12px;font-weight:500}
+.divider{height:1px;background:var(--border);margin:28px 0}
+.scroll-wrap{overflow-x:auto;overflow-y:visible;margin-bottom:24px;padding-top:4px;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+.scroll-wrap::-webkit-scrollbar{height:3px}
+.scroll-wrap::-webkit-scrollbar-thumb{background:var(--border-med);border-radius:2px}
+.cards-row{display:flex;gap:8px;min-width:max-content}
+.day-card{width:118px;min-width:118px;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 12px;text-align:center;cursor:pointer;transition:all .15s ease;display:flex;flex-direction:column;-webkit-tap-highlight-color:transparent;user-select:none;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.day-card:hover{background:var(--bg-200);border-color:var(--border-med)}
+.day-card.selected{background:var(--bg-300);border-color:var(--border-strong)}
+.card-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;color:var(--text-400)}
+.day-card.selected .card-label{color:var(--text-200)}
+.card-date{font-size:10px;color:var(--text-400);margin-top:2px}
+.card-icon{font-size:24px;margin:10px 0 8px;display:block}
+.card-high{font-size:22px;font-weight:600;display:block;line-height:1}
+.card-low{font-size:12px;color:var(--text-400);margin-top:3px;display:block}
+.temp-bar-wrap{margin-top:8px;height:3px;border-radius:2px;background:var(--bg-400);position:relative;overflow:hidden}
+.temp-bar{position:absolute;top:0;bottom:0;border-radius:2px;background:var(--accent-coral)}
+.walk-dot-wrap{margin-top:8px;display:flex;justify-content:center;gap:4px}
+.walk-dot{width:6px;height:6px;border-radius:50%}
+.dot-label{font-size:8px;color:var(--text-400);margin-top:3px;letter-spacing:.5px}
+.pills-area{margin-top:8px;display:flex;flex-direction:column;gap:3px;flex:1}
+.pill-slot{border-radius:6px;display:flex;flex-direction:column;justify-content:center;padding:6px 8px;overflow:hidden}
+.pill-time{font-size:10px;font-weight:600;color:var(--text-200);white-space:nowrap;line-height:1.2;text-align:left}
+.pill-title{font-size:10px;color:var(--text-200);line-height:1.35;text-align:left;word-break:break-word}
+.detail{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:24px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+
+/* TOD cards — 3-column grid on desktop, stacked on mobile */
+.tod-row{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.tod-card{padding:16px 14px;border-right:1px solid var(--border);position:relative;background:var(--bg-000)}
+.tod-card:last-child{border-right:none}
+.tod-top-bar{height:3px;position:absolute;top:0;left:0;right:0}
+.tod-period{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;color:var(--text-400);margin-top:4px}
+.tod-time{display:block;font-size:9px;color:var(--text-400);margin-top:2px;opacity:.7}
+
+/* Walk score block inside tod card */
+.tod-score-block{border-radius:10px;padding:8px 10px;margin-top:10px}
+.tod-score-label{font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px}
+.tod-score-num{font-size:22px;font-weight:700;line-height:1}
+.tod-score-slash{font-size:11px;font-weight:400;opacity:.5}
+.tod-score-denom{font-size:11px;font-weight:400;opacity:.5}
+.tod-score-word{font-size:11px;font-weight:700;margin-top:2px}
+.tod-score-bar{height:3px;border-radius:2px;margin-top:6px;overflow:hidden}
+.tod-score-bar-fill{height:100%;border-radius:2px}
+
+/* Metric mini-cards */
+.tod-metric-cards{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px}
+.tod-metric-card{background:var(--bg-200);border-radius:6px;padding:5px 7px}
+.tod-metric-card-label{font-size:8px;color:var(--text-400);font-weight:500;margin-bottom:2px}
+.tod-metric-card-value{font-size:11px;font-weight:700;color:var(--text-100)}
+.tod-metric-card-sub{font-size:9px;color:var(--text-400);margin-top:1px}
+
+/* Top section of tod card */
+.tod-icon{font-size:22px;margin:8px 0 4px;display:block}
+.tod-cond-label{font-size:12px;font-weight:600;color:var(--text-100);margin-top:4px}
+.tod-walk-insight{font-size:10px;color:var(--text-400);margin-top:2px;line-height:1.4}
+.tod-temp-hero{font-size:24px;font-weight:700;line-height:1;color:var(--text-100);text-align:right}
+.tod-feels{font-size:10px;color:var(--text-400);margin-top:2px;text-align:right}
+.tod-paw{font-size:10px;letter-spacing:2px;opacity:.6;margin-top:2px;display:block}
+
+/* Getting Ready section */
+.tod-clothing-divider{border:none;border-top:1px solid var(--border);margin:10px 0 8px}
+.tod-ready-heading{font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-400);margin-bottom:8px}
+.tod-ready-sub{font-size:7px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-400);margin:8px 0 5px;padding-top:7px;border-top:1px solid var(--border)}
+.tod-ready-sub:first-of-type{margin-top:0;border-top:none}
+.tod-layer-row{display:flex;align-items:flex-start;gap:5px;padding:4px 0;border-bottom:1px solid var(--border)}
+.tod-layer-row:last-of-type{border-bottom:none;padding-bottom:0}
+.tod-layer-icon{font-size:11px;flex-shrink:0;margin-top:1px}
+.tod-layer-inner{flex:1}
+.tod-layer-headline{font-size:10px;font-weight:600;color:var(--text-100);line-height:1.3}
+.tod-layer-note{font-size:9px;color:var(--text-400);margin-top:1px;line-height:1.3}
+.tod-rain-alert{display:flex;align-items:flex-start;gap:5px;background:rgba(74,127,165,0.08);border:1px solid rgba(74,127,165,0.18);border-radius:5px;padding:5px 7px;margin-top:6px;margin-bottom:3px}
+.tod-rain-alert-icon{font-size:11px;flex-shrink:0;margin-top:1px}
+.tod-rain-alert-body{flex:1}
+.tod-rain-alert-title{font-size:10px;font-weight:600;color:rgb(50,100,140);margin-bottom:1px}
+.tod-rain-alert-sub{font-size:9px;color:rgb(70,120,160);line-height:1.3}
+.tod-milo-section{margin-top:0}
+.tod-milo-tip{display:flex;align-items:flex-start;gap:5px;margin-bottom:4px}
+.tod-milo-tip:last-child{margin-bottom:0}
+.tod-milo-tip-icon{font-size:11px;flex-shrink:0;margin-top:1px}
+.tod-milo-tip-text{flex:1}
+.tod-milo-tip-label{font-size:10px;font-weight:600;color:var(--text-200);margin-bottom:1px}
+.tod-milo-tip-note{font-size:9px;color:var(--text-400);line-height:1.3}
+
+/* Detail grid — events/reminders */
+.detail-grid{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--border)}
+.detail-col{padding:18px 16px;border-right:1px solid var(--border)}
+.detail-col:last-child{border-right:none}
+.detail-col-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:600;color:var(--text-400);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.no-events{font-size:11px;color:var(--text-400);font-style:italic}
+.event-pill{padding:10px 12px;border-radius:var(--radius-sm);background:var(--bg-200);border-left:3px solid transparent;margin-bottom:8px;display:flex;align-items:flex-start;gap:8px}
+.event-title{font-size:11px;font-weight:600;color:var(--text-100);margin-bottom:2px;line-height:1.3}
+.event-time{font-size:10px;color:var(--text-400)}
+.event-loc{font-size:10px;color:var(--text-400);margin-top:2px}
+.event-cal{font-size:9px;letter-spacing:.5px;white-space:nowrap;padding-top:1px;flex-shrink:0;font-weight:600}
+.around-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-400);margin:10px 0 6px;padding-top:8px;border-top:1px dashed var(--border)}
+.reminder-pill{padding:7px 10px;border-radius:var(--radius-sm);background:var(--bg-200);border-left:3px solid transparent;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.reminder-pill-overdue{padding:7px 10px;border-radius:var(--radius-sm);background:var(--danger-bg);border-left:3px solid var(--danger);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.reminder-title{font-size:11px;font-weight:600;color:var(--text-100);flex:1;line-height:1.3}
+.reminder-title-overdue{font-size:11px;font-weight:600;color:var(--danger);flex:1;line-height:1.3}
+.reminder-list-tag{font-size:9px;letter-spacing:.5px;color:var(--text-400);white-space:nowrap;font-weight:500}
+.reminder-divider{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-400);margin:12px 0 8px;padding-top:10px;border-top:1px dashed var(--border);font-weight:500}
+.reminder-overdue-divider{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--danger);margin:12px 0 8px;padding-top:10px;border-top:1px dashed var(--danger-border);font-weight:500}
+
+/* Stats grid */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
+.stat-box{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.stat-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-400);margin-bottom:4px;font-weight:500}
+.stat-val{font-size:26px;font-weight:700;color:var(--text-100);line-height:1}
+.stat-unit{font-size:11px;color:var(--text-400);margin-top:3px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid var(--border)}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text-400);letter-spacing:1px;text-transform:uppercase}
+.legend-dot{width:7px;height:7px;border-radius:50%}
+
+/* Sports / Events / Food */
+.city-col{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.sport-item{padding:10px 0;border-bottom:1px solid var(--border)}
+.sport-item:last-child{border-bottom:none;padding-bottom:0}
+.sport-item-title{font-size:11px;font-weight:600;color:var(--text-100);margin-bottom:3px;line-height:1.3}
+.sport-item-meta{font-size:10px;color:var(--text-400);line-height:1.4}
+.sport-tag{display:inline-block;font-size:9px;letter-spacing:1px;text-transform:uppercase;border-radius:4px;padding:2px 7px;margin-top:4px;font-weight:600;border:1px solid transparent}
+.home-tag{background:rgba(34,112,49,.1);color:rgb(34,112,49);border-color:rgba(34,112,49,.2)}
+.event-item{padding:10px 0;border-bottom:1px solid var(--border)}
+.event-item:last-child{border-bottom:none;padding-bottom:0}
+.event-item-title{font-size:11px;font-weight:600;color:var(--text-100);margin-bottom:3px;line-height:1.3}
+.event-item-meta{font-size:10px;color:var(--text-400);line-height:1.5}
+.event-tag{display:inline-block;font-size:9px;letter-spacing:1px;text-transform:uppercase;border-radius:4px;padding:2px 7px;margin-top:4px;font-weight:600;border:1px solid transparent}
+.food-cat-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:6px;margin-top:16px}
+.food-cat-label:first-child{margin-top:0}
+.food-item{padding:7px 0;border-bottom:1px solid var(--border)}
+.food-item:last-child{border-bottom:none}
+.food-item-name{font-size:11px;font-weight:600;color:var(--text-100);margin-bottom:2px}
+.food-item-addr{font-size:10px;color:var(--text-400);margin-bottom:3px}
+.food-item-vibe{font-size:10px;color:var(--text-400);line-height:1.4;opacity:.85}
+.seasonal-badge{display:inline-block;font-size:9px;letter-spacing:1px;text-transform:uppercase;border-radius:4px;padding:2px 6px;margin-top:4px;font-weight:600;background:rgba(207,92,54,.1);color:rgb(207,92,54);border:1px solid rgba(207,92,54,.25)}
+.wind-pill{display:inline-flex;align-items:center;padding:1px 7px;border-radius:20px;font-size:9px;font-weight:600;letter-spacing:.3px;vertical-align:middle;margin-left:3px}
+.w-calm{background:rgba(34,197,94,.12);color:rgb(21,128,61)}
+.w-light{background:rgba(20,184,166,.12);color:rgb(15,118,110)}
+.w-breezy{background:rgba(59,130,246,.12);color:rgb(29,78,216)}
+.w-windy{background:rgba(251,146,60,.14);color:rgb(154,52,18)}
+.w-vwindy{background:rgba(239,68,68,.12);color:rgb(153,27,27)}
+.w-strong{background:rgba(139,92,246,.14);color:rgb(76,29,149)}
+.walk-great{color:rgb(34,112,49)}.walk-decent{color:rgb(160,100,0)}.walk-tough{color:rgb(180,80,0)}.walk-skip{color:var(--danger)}
+.footer{margin-top:24px;text-align:center;font-size:11px;color:var(--text-400);letter-spacing:.5px}
+@media(prefers-color-scheme:dark){:root{color-scheme:light only}html,body{background:#faf9f5 !important;color:#141413 !important}.day-card{background:#ffffff !important;color:#141413 !important}.day-card.selected{background:#f0ede6 !important}.detail,.tod-card,.stat-box,.city-col{background:#ffffff !important;color:#141413 !important}}
+@media(max-width:680px){.tod-row{grid-template-columns:1fr}.tod-card{border-right:none;border-bottom:1px solid var(--border)}.tod-card:last-child{border-bottom:none}.detail-grid{grid-template-columns:1fr}.detail-col{border-right:none!important;border-bottom:1px solid var(--border)}.detail-col:last-child{border-bottom:none}.stats-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div><div class="city">Toronto</div><div class="region">Ontario · Canada</div></div>
+    <div class="cur-block">
+      <div class="cur-temp" id="cur-temp"></div>
+      <div class="cur-cond" id="cur-cond"></div>
+      <div class="cur-wind" id="cur-wind"></div>
+    </div>
+  </div>
+  <div class="section-label">7-Day Forecast</div>
+  <div class="scroll-wrap"><div class="cards-row" id="cards-row"></div></div>
+  <div class="detail" id="detail"></div>
+  <div class="stats-grid" id="stats-grid"></div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:rgb(34,112,49)"></div>Great walk</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgb(160,100,0)"></div>Decent walk</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgb(180,80,0)"></div>Tough walk</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgb(181,51,51)"></div>Stay inside</div>
+  </div>
+  <div class="footer" id="footer"></div>
+</div>
+
+<script>
+// ██████  DATA BLOCK — only this section changes on every refresh  ██████
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// CURRENT and DAYS are populated live from Open-Meteo on page load.
+// Values here are fallbacks shown only if the fetch fails.
+let CURRENT = {
+  temp:"—", cond:"Loading…", wind:"🇨🇦 Toronto",
+  refreshed:"Fetching live data…"
+};
+
+// TFC: https://raw.githubusercontent.com/jbaranski/majorleaguesoccer-ical/refs/heads/main/calendars/torontofc.ics
+// Sceptres: web search · MLB/NBA/WNBA: fetch_sports_data
+// Toronto Tempo: fetch_sports_data league="wnba" team="Toronto Tempo" — season starts Apr 29 preseason / May 8 regular
+// ⏰ REFRESH PROTOCOL: call user_time_v0 in parallel with every refresh
+//    Only set overdue:true if reminder due datetime is BEFORE current time (not just same date)
+
+// DAYS is populated live from Open-Meteo on page load (see buildDaysFromOpenMeteo).
+// This minimal placeholder only shows if the fetch fails and nothing renders.
+let DAYS = [
+  {date:new Date().toISOString().slice(0,10),label:"Today",high:0,low:0,condition:"Loading…",icon:"⏳",precip:0,wind:0,uv:0,weathercode:0,
+    tod:[
+      {period:"Morning",  icon:"⏳",condition:"Loading…",precip:0,wind:0,temp:0,weathercode:0},
+      {period:"Afternoon",icon:"⏳",condition:"Loading…",precip:0,wind:0,temp:0,weathercode:0},
+      {period:"Evening",  icon:"⏳",condition:"Loading…",precip:0,wind:0,temp:0,weathercode:0},
+    ]},
+];
+
+const EVENTS = [];
+
+const CITY_BY_DATE = {};
+
+const CITY_SPORTS = [];
+
+const CITY_EVENTS = [];
+
+const CITY_FOOD = [
+  {title:"Goppion Caffetteria",emoji:"☕️",   address:"60 Fort York Blvd · Fort York",       vibe:"Tiny Italian espresso bar steps from home. Warm owner, dog-friendly, 4.9★.",   category:"King West · Fort York", catColor:"rgb(180,80,0)",   query:"Goppion Caffetteria Fort York Toronto",     seasonal:true},
+  {title:"Oretta Caffè",      emoji:"☕️",   address:"King St W & Bathurst · Fort York",    vibe:"Italian espresso behind the colourful Oretta restaurant. Quiet & distinctive.", category:"King West · Fort York", catColor:"rgb(180,80,0)",   query:"Oretta Caffe King Bathurst Toronto",        seasonal:false},
+  {title:"Fix Coffee + Bikes",  emoji:"🚲",   address:"486 Front St W · The Well",           vibe:"Specialty coffee meets bike shop. Mavam espresso, house-made snacks.",          category:"King West · Fort York", catColor:"rgb(180,80,0)",   query:"Fix Coffee Bikes The Well Toronto",          seasonal:false},
+  {title:"Balzac's Coffee",     emoji:"☕️",   address:"43 Hanna Ave · Liberty Village",      vibe:"Heritage brick, airy space. Solid roasts, Parisian-inspired.",                  category:"Liberty Village",           catColor:"rgb(60,130,80)",  query:"Balzac's Coffee Liberty Village Toronto",    seasonal:false},
+  {title:"Arvo Coffee",         emoji:"☀️",   address:"Liberty Village",                         vibe:"Aussie-style flat whites, casual and well-reviewed.",                           category:"Liberty Village",           catColor:"rgb(60,130,80)",  query:"Arvo Coffee Liberty Village Toronto",         seasonal:false},
+  {title:"Forget Me Not Cafe",  emoji:"🏵️",address:"Ossington Ave · Ossington",          vibe:"Beloved neighbourhood staple. Great espresso, cozy and unhurried.",             category:"Ossington · Trinity",  catColor:"rgb(140,70,160)", query:"Forget Me Not Cafe Ossington Toronto",         seasonal:false},
+  {title:"Found Coffee",        emoji:"🌱",   address:"Shaw St · near Trinity Bellwoods",   vibe:"Leafy backyard patio, banana bread latte. Aussie-influenced.",                  category:"Ossington · Trinity",  catColor:"rgb(140,70,160)", query:"Found Coffee Shaw St Toronto",                 seasonal:false},
+  {title:"Sam James Coffee Bar",emoji:"☕️",   address:"917 Queen St W · Trinity Bellwoods", vibe:"Minimalist espresso bar across from the park. Some of the best shots.",          category:"Ossington · Trinity",  catColor:"rgb(140,70,160)", query:"Sam James Coffee Bar Queen West Toronto",      seasonal:false},
+  {title:"Misc Coffee",         emoji:"🦢",   address:"299 Ossington Ave · Ossington",       vibe:"Mint-green tiles, calm vibe. Pandan iced latte & fruit-noted espresso.",        category:"Ossington · Trinity",  catColor:"rgb(140,70,160)", query:"Misc Coffee 299 Ossington Toronto",             seasonal:false},
+  {title:"Cafe 23",             emoji:"🌿",   address:"728 Queen St W · West Queen West",    vibe:"Secret garden patio, Parisian vibes, Montreal bagels. Hidden gem.",             category:"Ossington · Trinity",  catColor:"rgb(140,70,160)", query:"Cafe 23 Queen West Toronto",                   seasonal:false},
+];
+
+const LIST_COLORS = {
+  "ToDo":"rgb(207,92,54)","Weekly":"rgb(255,41,104)","Monthly":"rgb(27,173,248)",
+  "Mom":"rgb(0,122,255)","Property Tax 2026":"rgb(217,166,159)","Shared":"rgb(204,115,225)",
+  "Grocery":"rgb(99,218,56)","Dad's Affairs":"rgb(0,122,255)"
+};
+
+const REMINDERS = [];
+
+// ██████  TEMPLATE — frozen, never changes  ██████
+// ═══════════════════════════════════════════════════════════════════════════════
+
+document.getElementById("cur-temp").textContent=CURRENT.temp;
+document.getElementById("cur-cond").textContent=CURRENT.cond;
+document.getElementById("cur-wind").textContent=CURRENT.wind;
+document.getElementById("footer").textContent=CURRENT.refreshed;
+
+// ── HELPERS ──
+function eventsFor(d){return EVENTS.filter(e=>e.date===d)}
+function remindersFor(d){return REMINDERS.filter(r=>r.date===d)}
+function cityEventsFor(d){return CITY_BY_DATE[d]||[]}
+function windChill(temp,wind){if(temp>10||wind<5)return temp;return Math.round(13.12+0.6215*temp-11.37*Math.pow(wind,0.16)+0.3965*temp*Math.pow(wind,0.16))}
+function rgba(rgb,a){return rgb.replace('rgb(','rgba(').replace(')',`,${a})`)}
+function mapsLink(q,l){return`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}" target="_blank" style="color:inherit;border-bottom:1px solid rgba(31,30,29,0.2);text-decoration:none">${l}</a>`}
+function windLabel(w){if(w<=10)return{label:"Calm",cls:"w-calm"};if(w<=20)return{label:"Light breeze",cls:"w-light"};if(w<=30)return{label:"Breezy",cls:"w-breezy"};if(w<=40)return{label:"Windy",cls:"w-windy"};if(w<=55)return{label:"Very windy",cls:"w-vwindy"};return{label:"Strong wind",cls:"w-strong"}}
+function windPill(w){const wl=windLabel(w);return`<span class="wind-pill ${wl.cls}">${wl.label}</span>`}
+function uvLabel(u){return(["Low","Low","Moderate","Moderate","High","High","High","Very High"][Math.min(u,7)])||"Low"}
+function tempColor(t){if(t<=-10)return"rgb(96,130,220)";if(t<=0)return"rgb(80,140,210)";if(t<=5)return"rgb(60,120,180)";if(t<=12)return"rgb(160,100,0)";if(t<=20)return"rgb(180,80,0)";return"rgb(181,51,51)"}
+
+function walkScore(precip,wind,temp,alert,wc){
+  let s=100;if(alert)s-=50;
+  if(wc!=null){if([95,96,99].includes(wc))s-=60;else if([65,75,82,86].includes(wc))s-=45;else if([61,71,80,85].includes(wc))s-=30;else if([63,73,81].includes(wc))s-=20;else if([51,53,55,77].includes(wc))s-=12;else if([45,48].includes(wc))s-=15;else if(wc===3)s-=5;}
+  else{if(precip>=80)s-=40;else if(precip>=60)s-=25;else if(precip>=40)s-=15;else if(precip>=20)s-=8;}
+  const felt=windChill(temp,wind);
+  if(temp<=10){if(felt<=-20)s-=45;else if(felt<=-15)s-=35;else if(felt<=-10)s-=22;else if(felt<=-5)s-=12;else if(felt<=-2)s-=6;if(wind>=50)s-=10;else if(wind>=35)s-=5;}
+  else{if(wind>=50)s-=25;else if(wind>=35)s-=15;else if(wind>=25)s-=8;else if(wind>=18)s-=3;
+    // Pleasant temp bonus only if it's not raining/snowing/foggy
+    const wetCodesForBonus=[45,48,51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86,95,96,99];
+    const isWetForBonus = wc!=null && wetCodesForBonus.includes(wc);
+    if(temp>=10&&temp<=22&&!isWetForBonus&&precip<30)s+=8;
+  }
+  return Math.max(0,Math.min(100,s));
+}
+function ratingFromScore(s, wc=null){
+  // Wet-weather hard cap: if it's actively raining/snowing/storming,
+  // cap label at "Decent" — common sense override regardless of score
+  const wetHazardCodes=[51,53,55,56,57,61,63,65,66,67,71,73,75,80,81,82,85,86,95,96,99];
+  const isWet = wc!=null && wetHazardCodes.includes(wc);
+  if(s>=75 && !isWet) return{label:"Great", cls:"walk-great",dot:"rgb(34,112,49)", paw:"🐾🐾🐾",bar:"rgb(34,112,49)"};
+  if(s>=75 &&  isWet) return{label:"Decent",cls:"walk-decent",dot:"rgb(160,100,0)",paw:"🐾🐾",  bar:"rgb(160,100,0)"};
+  if(s>=50)           return{label:"Decent",cls:"walk-decent",dot:"rgb(160,100,0)",paw:"🐾🐾",  bar:"rgb(160,100,0)"};
+  if(s>=25)           return{label:"Tough", cls:"walk-tough", dot:"rgb(180,80,0)", paw:"🐾",    bar:"rgb(180,80,0)"};
+  return              {label:"Skip",  cls:"walk-skip",  dot:"rgb(181,51,51)",paw:"🚫",   bar:"rgb(181,51,51)"};
+}
+
+// ── GETTING READY LOGIC (Milo: Aussiedoodle, 45lb, curly coat, has orange rain jacket) ──
+function miloTipsForTod(t,prevTod){
+  const felt=windChill(t.temp,t.wind);
+  const wc=t.weathercode??null;
+  const wetCodes=[51,53,55,61,63,65,71,73,75,77,80,81,82,85,86,95,96,99];
+  const isWet=wetCodes.includes(wc)||(wc===null&&t.precip>=30);
+  const isVeryWet=[61,63,65,80,81,82,95,96,99].includes(wc)||(wc===null&&t.precip>=60)||t.alert;
+  const recentRain=prevTod&&(prevTod.precip>=40||wetCodes.includes(prevTod.weathercode??-1));
+  const wetGround=recentRain||isVeryWet;
+  const mudRisk=wetGround&&t.precip>=30;
+  const coldStress=felt<=-5;
+  const tips=[];
+
+  if(isVeryWet&&coldStress){
+    tips.push({icon:"🧡",label:"Put his jacket on",note:"Heavy rain + cold — orange shell on"});
+    tips.push({icon:"🛁",label:"Towel at the door",note:"Curly coat still needs a dry-off"});
+  } else if(isVeryWet){
+    tips.push({icon:"🧡",label:"Jacket recommended",note:"Cuts post-walk dry-off significantly"});
+    tips.push({icon:"🛁",label:"Towel at the door",note:"Curly coat still holds moisture"});
+  } else if(isWet){
+    tips.push({icon:"🧴",label:"Quick wipe-down",note:"Check ears and paws after"});
+  }
+  if(mudRisk){tips.push({icon:"🐾",label:"Paw check at door",note:"Mud between toes — wipe at door"});}
+  else if(wetGround){tips.push({icon:"🐾",label:"Check paws",note:"Wet ground — mud likely on trails"});}
+  if(coldStress&&!isVeryWet){tips.push({icon:"🧡",label:"Consider his jacket",note:`Feels ${felt}° — jacket helps`});}
+  if(!tips.length){tips.push({icon:"✅",label:"All clear for Milo",note:"Good to go"});}
+
+  const dogHTML=tips.map(tp=>`<div class="tod-milo-tip"><div class="tod-milo-tip-icon">${tp.icon}</div><div class="tod-milo-tip-text"><div class="tod-milo-tip-label">${tp.label}</div><div class="tod-milo-tip-note">${tp.note}</div></div></div>`).join("");
+  return`<div class="tod-milo-section"><div class="tod-ready-sub">For Milo 🐾</div>${dogHTML}</div>`;
+}
+
+function clothingForTod(t,prevTod=null){
+  const felt=windChill(t.temp,t.wind);
+  const wc=t.weathercode??null;
+  const wetCodes=[51,53,55,61,63,65,71,73,75,77,80,81,82,85,86,95,96,99];
+  const isWet=wetCodes.includes(wc)||(wc===null&&t.precip>=30);
+  const isVeryWet=[61,63,65,80,81,82,95,96,99].includes(wc)||(wc===null&&t.precip>=60)||t.alert;
+  const layers=[];
+  const youTips=[];
+
+  // Base layer: felt ≤6°C always; felt 7–10°C + wind ≥15 km/h
+  if(felt<=6||(felt<=10&&t.wind>=15)){
+    layers.push({icon:"🧵",piece:"Thin synthetic base",
+      note:felt<=2?"Serious cold — layer up":t.wind>=15?"Wind chill — helps regulate heat":"Moisture management"});
+  }
+
+  // Insulating layer
+  if(t.temp<=15){
+    let piece,note;
+    if(felt<=-8){piece="Down jacket";note="Add shell if rain picks up";}
+    else if(isWet&&t.temp<=12){piece="Light puffer (standalone)";note="Handles light drizzle";}
+    else if(t.temp<=8){piece="Light puffer or fleece";note="Works standalone in dry conditions";}
+    else{piece="Light puffer or fleece";note="Standalone for this temp range";}
+    layers.push({icon:"🧥",piece,note});
+  }
+
+  // Shell layer
+  let shell=null,shellNote=null,alertTitle=null,alertSub=null;
+  if(isVeryWet&&felt<=-2){shell="Waterproof shell";shellNote="Heavy rain + cold — wear it";alertTitle="Heavy rain + cold";alertSub="Full shell on — don't leave it behind";}
+  else if(isVeryWet){shell="Ultralight waterproof shell";shellNote="Wear it";alertTitle="Heavy showers expected";alertSub="Don't leave without your shell";}
+  else if(isWet&&t.precip>=40){shell="Ultralight waterproof shell";shellNote=t.precip>=60?"Showers likely — wear it":"Carry it or wear it";if(t.precip>=60){alertTitle="Showers likely";alertSub="Keep your shell on or within reach";}}
+  else if(t.precip>=30){shell="Ultralight shell (optional)";shellNote="30% — toss it in your bag";}
+  if(shell) layers.push({icon:"🌧️",piece:shell,note:shellNote});
+
+  // Waterproof shoes
+  const recentRain=prevTod&&(prevTod.precip>=40);
+  if(isVeryWet||isWet||recentRain){youTips.push({icon:"👟",piece:"Waterproof shoes",note:"Skip the runners today"});}
+
+  const alertHTML=alertTitle?`<div class="tod-rain-alert"><div class="tod-rain-alert-icon">🌧️</div><div class="tod-rain-alert-body"><div class="tod-rain-alert-title">${alertTitle}</div><div class="tod-rain-alert-sub">${alertSub}</div></div></div>`:"";
+  const totalCount=layers.length+youTips.length;
+  if(!totalCount&&!alertHTML) return`<hr class="tod-clothing-divider"><div class="tod-ready-heading">Getting Ready</div><div class="tod-ready-sub">For You</div><div style="font-size:10px;color:var(--text-400);font-style:italic">T-shirt weather ☀️</div>`+miloTipsForTod(t,prevTod);
+
+  const layerHTML=layers.map(l=>`<div class="tod-layer-row"><div class="tod-layer-icon">${l.icon}</div><div class="tod-layer-inner"><div class="tod-layer-headline">${l.piece}</div>${l.note?`<div class="tod-layer-note">${l.note}</div>`:""}</div></div>`).join("");
+  const youHTML=youTips.map(tp=>`<div class="tod-layer-row"><div class="tod-layer-icon">${tp.icon}</div><div class="tod-layer-inner"><div class="tod-layer-headline">${tp.piece}</div><div class="tod-layer-note">${tp.note}</div></div></div>`).join("");
+  return`<hr class="tod-clothing-divider"><div class="tod-ready-heading">Getting Ready</div><div class="tod-ready-sub">For You · ${totalCount} layer${totalCount!==1?"s":""}</div>${alertHTML}${layerHTML}${youHTML}`+miloTipsForTod(t,prevTod);
+}
+
+// ── WALK INFO (full info for day-level) ──
+function walkInfo(day,tod=null){
+  const temp=tod?tod.temp:day.high;
+  const wind=tod?tod.wind:day.wind;
+  const precip=tod?tod.precip:day.precip;
+  const wc=tod?(tod.weathercode??null):(day.weathercode??null);
+  const alert=(tod?tod.alert:day.alert)||false;
+  const s=walkScore(precip,wind,temp,alert,wc);
+  const r=ratingFromScore(s,wc);
+  const felt=windChill(temp,wind);
+  return{score:s,felt,...r};
+}
+
+// Recomputed in renderCards() so live data refreshes the temp-bar scale
+let minAll=0,maxAll=0,span=1;
+let sel=0;
+
+function renderCards(){
+  // Recompute temperature scale from live data
+  minAll=Math.min(...DAYS.map(d=>d.low));
+  maxAll=Math.max(...DAYS.map(d=>d.high));
+  span=maxAll-minAll||1;
+  const row=document.getElementById("cards-row");row.innerHTML="";
+  DAYS.forEach((day,i)=>{
+    const evs=eventsFor(day.date);
+    const isSel=i===sel;
+    const bl=(day.low-minAll)/span*55+15,bw=Math.max((day.high-day.low)/span*50+10,8);
+    const dateStr=new Date(day.date+"T12:00:00").toLocaleDateString("en-CA",{month:"short",day:"numeric"});
+    const todDots=day.tod.map(t=>`<div class="walk-dot" style="background:${ratingFromScore(walkScore(t.precip,t.wind,t.temp,t.alert||false,t.weathercode??null),t.weathercode??null).dot}"></div>`).join("");
+
+    // Pills: events + reminders (deduped) + city games
+    const rems=remindersFor(day.date).filter(r=>!r.overdue);
+    const evTitles=new Set(evs.map(e=>e.title.replace(/[^\w\s]/g,"").trim().toLowerCase()));
+    const dedupedRems=rems.filter(r=>!evTitles.has(r.title.replace(/[^\w\s]/g,"").trim().toLowerCase()));
+    const allPills=[...evs.map(e=>({type:"event",item:e})),...dedupedRems.map(r=>({type:"reminder",item:r}))];
+    const maxPills=2;
+    let pills="";
+    for(let s2=0;s2<maxPills;s2++){
+      const p=allPills[s2];
+      if(p&&p.type==="event"){const ev=p.item;const t=ev.time?ev.time.replace(" AM","a").replace(" PM","p"):"";pills+=`<div class="pill-slot" style="background:${rgba(ev.color,0.1)};border:1px solid ${rgba(ev.color,0.2)}"><span class="pill-time">${t}</span><span class="pill-title">${ev.title}</span></div>`;}
+      else if(p&&p.type==="reminder"){const r=p.item;const rtime=r.time?r.time.replace(" AM","a").replace(" PM","p"):"";pills+=`<div class="pill-slot" style="background:${rgba(r.color,0.08)};border:1px solid ${rgba(r.color,0.2)}"><span class="pill-time">${rtime?`⏰ ${rtime}`:`🔔 ${r.list}`}</span><span class="pill-title">${r.title}</span></div>`;}
+      else{pills+=`<div class="pill-slot" style="background:transparent"></div>`;}
+    }
+    if(allPills.length>maxPills)pills+=`<div style="font-size:9px;color:var(--text-400);text-align:center;margin-top:2px">+${allPills.length-maxPills} more</div>`;
+
+    const card=document.createElement("div");
+    card.className=`day-card${isSel?" selected":""}`;
+    card.innerHTML=`<div style="margin-bottom:8px"><div class="card-label">${day.label}</div><div class="card-date">${dateStr}</div></div><span class="card-icon">${day.icon}</span><span class="card-high" style="color:${tempColor(day.high)}">${day.high}°</span><span class="card-low">${day.low}°</span><div class="temp-bar-wrap"><div class="temp-bar" style="left:${bl}%;width:${bw}%"></div></div><div style="display:flex;justify-content:space-between;margin-top:3px"><span style="font-size:8px;color:var(--text-400)">${minAll}°</span><span style="font-size:8px;color:var(--text-400)">${maxAll}°</span></div><div class="walk-dot-wrap">${todDots}</div><div class="dot-label">AM · PM · EVE</div><div class="pills-area">${pills}</div>`;
+    card.addEventListener("click",()=>{sel=i;renderCards();renderDetail();renderStats();setTimeout(()=>document.getElementById("detail").scrollIntoView({behavior:"smooth",block:"nearest"}),30);});
+    row.appendChild(card);
+  });
+}
+
+function renderDetail(){
+  const day=DAYS[sel];
+  const evs=eventsFor(day.date);
+  const evTitle=day.label==="Today"?"Today's Events":`${day.label} · Events`;
+
+  const todHTML=day.tod.map((t,ti)=>{
+    const ts=walkScore(t.precip,t.wind,t.temp,t.alert||false,t.weathercode??null);
+    const tr=ratingFromScore(ts,t.weathercode??null);
+    const felt=windChill(t.temp,t.wind);
+    const timeRange={Morning:"6am – 12pm",Afternoon:"12pm – 6pm",Evening:"6pm – 10pm"}[t.period]||"";
+    const scoreWord=ts>=90?"Excellent":ts>=75?"Great":ts>=50?"Decent":ts>=25?"Tough":"Skip";
+    const walkInsight=ts>=90?"Perfect for a walk":ts>=75?"Good conditions":ts>=50?"Still okay, dress for it":ts>=25?"Keep it short":"Stay cozy inside";
+    const prevTod=ti>0?day.tod[ti-1]:null;
+    const clothingHTML=clothingForTod(t,prevTod);
+
+    return`<div class="tod-card">
+<div class="tod-top-bar" style="background:${tr.bar}"></div>
+<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-top:4px">
+  <div><div class="tod-period">${t.period}</div><span class="tod-time">${timeRange}</span></div>
+  <div style="text-align:right"><div class="tod-temp-hero">${t.temp}°</div><div class="tod-feels">${felt<t.temp?`feels ${felt}°`:"&nbsp;"}</div></div>
+</div>
+<span class="tod-icon">${t.icon}</span>
+<div class="tod-cond-label">${t.condition}</div>
+<div class="tod-walk-insight">${walkInsight}</div>
+<div class="tod-paw">${tr.paw}</div>
+<div class="tod-score-block" style="background:${tr.bar}14">
+  <div class="tod-score-label" style="color:${tr.bar}">Walk Score</div>
+  <div style="display:flex;align-items:baseline;gap:0">
+    <span class="tod-score-num" style="color:${tr.bar}">${ts}</span><span class="tod-score-slash" style="color:${tr.bar}"> /</span><span class="tod-score-denom" style="color:${tr.bar}">100</span>
+  </div>
+  <div class="tod-score-word" style="color:${tr.bar}">${scoreWord}</div>
+  <div class="tod-score-bar" style="background:${tr.bar}22"><div class="tod-score-bar-fill" style="width:${ts}%;background:${tr.bar}"></div></div>
+</div>
+<div class="tod-metric-cards">
+  <div class="tod-metric-card"><div class="tod-metric-card-label">Rain chance</div><div class="tod-metric-card-value">💧 ${t.precip}%</div></div>
+  <div class="tod-metric-card"><div class="tod-metric-card-label">Wind</div><div class="tod-metric-card-value">💨 ${t.wind} km/h</div><div class="tod-metric-card-sub">${windLabel(t.wind).label}</div></div>
+</div>
+${clothingHTML}
+</div>`;
+  }).join("");
+
+  const calHTML=evs.map(ev=>`<div class="event-pill" style="border-left-color:${ev.color}"><div style="flex:1;min-width:0"><div class="event-title">${ev.title}</div>${ev.time?`<div class="event-time">🕐 ${ev.time}${ev.end?" – "+ev.end:""}</div>`:""}${ev.location?`<div class="event-loc">📍 ${mapsLink(ev.location,ev.location)}</div>`:""}</div><div class="event-cal" style="color:${ev.color}">${ev.calendar}</div></div>`).join("");
+  const cityHTML=cityEventsFor(day.date).map(ev=>{return`<div class="event-pill" style="border-left-color:${rgba(ev.color,0.8)}"><div style="flex:1;min-width:0"><div class="event-title">${ev.emoji} ${ev.title}</div><div class="event-time">🕐 ${ev.time} · 📍 ${mapsLink(ev.venue+' Toronto',ev.venue)}</div></div><div class="event-cal" style="color:${ev.color}">${ev.tag}</div></div>`;}).join("");
+  const overdueHTML=REMINDERS.filter(r=>r.overdue).map(r=>`<div class="reminder-pill-overdue"><div class="reminder-title-overdue">⚠️ ${r.title}</div><div class="reminder-list-tag" style="color:var(--danger)">${r.list}</div></div>`).join("");
+  const remHTML=remindersFor(day.date).filter(r=>!r.overdue).map(r=>`<div class="reminder-pill" style="border-left-color:${r.color}"><div class="reminder-title">${r.title}</div><div class="reminder-list-tag">${r.list}</div></div>`).join("");
+
+  const evSection=(calHTML||cityHTML||overdueHTML||remHTML)
+    ?calHTML
+      +(cityHTML?`<div class="around-label">Around the City</div>${cityHTML}`:"")
+      +(overdueHTML?`<div class="reminder-overdue-divider">⚠️ Overdue</div>${overdueHTML}`:"")
+      +(remHTML?`<div class="reminder-divider">📋 Reminders</div>${remHTML}`:"")
+    :`<div class="no-events">Nothing scheduled</div>`;
+
+  document.getElementById("detail").innerHTML=`<div class="tod-row">${todHTML}</div><div class="detail-grid"><div class="detail-col" style="grid-column:1/-1"><div class="detail-col-label">📅 ${evTitle}</div>${evSection}</div></div>`;
+}
+
+function renderStats(){
+  const day=DAYS[sel];
+  document.getElementById("stats-grid").innerHTML=[
+    {label:"Wind",         value:`${day.wind}`,   unit:`km/h · ${day.label}`,extra:windPill(day.wind)},
+    {label:"Precip Chance",value:`${day.precip}%`,unit:day.label,            extra:""},
+    {label:"UV Index",     value:`${day.uv}`,     unit:uvLabel(day.uv),      extra:""},
+    {label:"High / Low",   value:`${day.high}°`,  unit:`Low ${day.low}° · ${day.label}`,extra:""},
+  ].map(s=>`<div class="stat-box"><div class="stat-label">${s.label}</div><div class="stat-val">${s.value}</div><div class="stat-unit">${s.unit}${s.extra?` ${s.extra}`:""}</div></div>`).join("");
+}
+
+function renderSports(){
+  document.getElementById("sports-col").innerHTML=`<div class="city-col">${CITY_SPORTS.map(s=>{
+    const leagueTag=s.tag?`<span class="sport-tag home-tag">${s.tag}</span>`:"";
+    return`<div class="sport-item"><div class="sport-item-title">${s.emoji} ${s.title}</div><div class="sport-item-meta">${s.meta}</div>${s.venue?`<div class="sport-item-meta" style="margin-top:3px">📍 ${mapsLink(s.venue,s.venue)}</div>`:""}<div style="display:flex;align-items:center;gap:8px;margin-top:6px">${leagueTag}${s.tickets?`<a href="${s.tickets}" target="_blank" style="font-size:10px;color:var(--text-400);text-decoration:none;border-bottom:1px solid rgba(31,30,29,0.2);line-height:1">🎟 Tickets</a>`:""}</div></div>`;
+  }).join("")}</div>`;
+}
+
+const _evSkipped=[];
+function _evDismiss(title){if(!_evSkipped.includes(title))_evSkipped.push(title);renderCityEvents();}
+function renderCityEvents(){
+  const visible=CITY_EVENTS.filter(e=>!_evSkipped.includes(e.title));
+  const btn=`position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-400);opacity:0.4;padding:2px 6px;line-height:1`;
+  const items=visible.map(e=>{
+    const sl=`https://www.google.com/search?q=${encodeURIComponent(e.title+' Toronto')}`;
+    const safe=e.title.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return`<div class="event-item" style="position:relative;padding-right:28px"><button class="_evx" data-t="${safe}" style="${btn}">✕</button><div class="event-item-title">${e.emoji} <a href="${sl}" target="_blank" style="color:inherit;border-bottom:1px solid rgba(31,30,29,0.2);text-decoration:none">${e.title}</a></div><div class="event-item-meta">${e.meta}</div>${e.location?`<div class="event-item-meta" style="margin-top:3px">📍 ${mapsLink(e.location,e.location)}</div>`:""}<span class="event-tag" style="background:${rgba(e.tagColor,0.1)};color:${e.tagColor};border-color:${rgba(e.tagColor,0.25)}">${e.tag}</span></div>`;
+  }).join("");
+  const skippedBar=_evSkipped.length?`<div style="margin-top:14px;padding:10px 12px;background:rgba(207,92,54,0.07);border-radius:8px;border:1px solid rgba(207,92,54,0.2)"><div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgb(207,92,54);font-weight:700;margin-bottom:4px">Skipped — screenshot & send to Claude</div><div style="font-size:11px;color:var(--text-400)">${_evSkipped.join(', ')}</div></div>`:"";
+  document.getElementById("events-col").innerHTML=`<div class="city-col">${items}${skippedBar}</div>`;
+  document.querySelectorAll('._evx').forEach(b=>b.addEventListener('click',function(){_evDismiss(this.getAttribute('data-t'));}));
+}
+
+const _fdSkipped=[];
+function _fdDismiss(title){if(!_fdSkipped.includes(title))_fdSkipped.push(title);renderFood();}
+function renderFood(){
+  const catColors={"King West · Fort York":"rgb(180,80,0)","Liberty Village":"rgb(60,130,80)","Ossington · Trinity":"rgb(140,70,160)"};
+  const btn=`position:absolute;top:0;right:0;background:none;border:none;cursor:pointer;font-size:12px;color:var(--text-400);opacity:0.4;padding:2px 5px;line-height:1`;
+  const cols=[["King West · Fort York","Liberty Village"],["Ossington · Trinity"]].map(group=>`<div class="city-col">${group.map(cat=>{
+    const items=CITY_FOOD.filter(f=>f.category===cat&&!_fdSkipped.includes(f.title)),c=catColors[cat];
+    if(!items.length)return`<div class="food-cat-label" style="color:${c}">${cat}</div><div style="font-size:11px;color:var(--text-400);padding-bottom:8px">More picks on next refresh.</div>`;
+    return`<div class="food-cat-label" style="color:${c}">${cat}</div>`+items.map(f=>{
+      const nameLink=`https://www.google.com/search?q=${encodeURIComponent(f.query)}`;
+      const safe=f.title.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return`<div class="food-item" style="position:relative;padding-right:16px"><button class="_fdx" data-fd="${safe}" style="${btn}">✕</button><div class="food-item-name">${f.emoji} <a href="${nameLink}" target="_blank" style="color:inherit;border-bottom:1px solid rgba(31,30,29,0.2);text-decoration:none">${f.title}</a></div>${f.seasonal?`<div><span class="seasonal-badge">Seasonal pick</span></div>`:""}<div class="food-item-addr">${mapsLink(f.address+' Toronto',f.address)}</div><div class="food-item-vibe">${f.vibe}</div></div>`;
+    }).join("");
+  }).join("")}</div>`).join("");
+  const skippedBar=_fdSkipped.length?`<div style="margin-top:10px;padding:10px 12px;background:rgba(207,92,54,0.07);border-radius:8px;border:1px solid rgba(207,92,54,0.2);grid-column:1/-1"><div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgb(207,92,54);font-weight:700;margin-bottom:4px">Skipped — screenshot & send to Claude</div><div style="font-size:11px;color:var(--text-400)">${_fdSkipped.join(', ')}</div></div>`:"";
+  document.getElementById("food-col").innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${cols}${skippedBar}</div>`;
+  document.querySelectorAll('._fdx').forEach(b=>b.addEventListener('click',function(){_fdDismiss(this.getAttribute('data-fd'));}));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ██████  LIVE WEATHER — Open-Meteo fetch on every page load  ██████
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Open-Meteo API docs: https://open-meteo.com/en/docs
+// Free, no API key required, CORS-enabled for browser use.
+// Aggregation: max for hazards (wind/precip/weathercode), avg for temp.
+// Worst-case ensures one rainy hour in an otherwise cloudy window still surfaces.
+
+// WMO weathercode → emoji icon + human label
+function wcToIconCond(wc){
+  if(wc===0)                             return {icon:"☀️",   cond:"Clear"};
+  if(wc===1||wc===2)                     return {icon:"⛅",   cond:"Partly cloudy"};
+  if(wc===3)                             return {icon:"☁️",   cond:"Cloudy"};
+  if(wc===45||wc===48)                   return {icon:"🌫️", cond:"Fog"};
+  if(wc===51||wc===53||wc===55)          return {icon:"🌦️", cond:"Drizzle"};
+  if(wc===56||wc===57)                   return {icon:"🌨️", cond:"Freezing drizzle"};
+  if(wc===61||wc===63)                   return {icon:"🌧️", cond:"Rain"};
+  if(wc===65)                            return {icon:"🌧️", cond:"Heavy rain"};
+  if(wc===66||wc===67)                   return {icon:"🌨️", cond:"Freezing rain"};
+  if(wc===71||wc===73)                   return {icon:"🌨️", cond:"Snow"};
+  if(wc===75)                            return {icon:"❄️",   cond:"Heavy snow"};
+  if(wc===77)                            return {icon:"🌨️", cond:"Snow grains"};
+  if(wc===80||wc===81)                   return {icon:"🌦️", cond:"Rain showers"};
+  if(wc===82)                            return {icon:"🌧️", cond:"Heavy showers"};
+  if(wc===85||wc===86)                   return {icon:"🌨️", cond:"Snow showers"};
+  if(wc===95)                            return {icon:"⛈️", cond:"Thunderstorm"};
+  if(wc===96||wc===99)                   return {icon:"⛈️", cond:"Thunderstorm w/ hail"};
+  return {icon:"❔", cond:"Unknown"};
+}
+
+function avg(arr){ return arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : 0; }
+
+// Worst-case weathercode in an array — picks whichever hourly code carries
+// the biggest walk-score penalty.
+function worstWc(arr){
+  const rank = wc => {
+    if([95,96,99].includes(wc)) return 9;
+    if([65,75,82,86].includes(wc)) return 8;
+    if([61,71,80,85].includes(wc)) return 7;
+    if([63,73,81].includes(wc)) return 6;
+    if([45,48].includes(wc)) return 5;
+    if([51,53,55,77].includes(wc)) return 4;
+    if([56,57,66,67].includes(wc)) return 4;
+    if(wc===3) return 3;
+    if(wc===1||wc===2) return 2;
+    if(wc===0) return 1;
+    return 0;
+  };
+  let worst = arr[0]||0, worstRank = rank(worst);
+  for(const w of arr){ const r=rank(w); if(r>worstRank){worstRank=r;worst=w;} }
+  return worst;
+}
+
+function dayLabel(dateStr, idx){
+  if(idx===0) return "Today";
+  const d = new Date(dateStr+"T12:00:00");
+  return d.toLocaleDateString("en-CA",{weekday:"short"});
+}
+
+function buildDaysFromOpenMeteo(data){
+  const d = data.daily, h = data.hourly;
+  const out = [];
+  for(let i=0;i<d.time.length;i++){
+    const date = d.time[i];
+    const dailyWc = d.weathercode[i];
+    const dailyIconCond = wcToIconCond(dailyWc);
+    const hourIdx = [];
+    for(let j=0;j<h.time.length;j++){
+      if(h.time[j].startsWith(date)) hourIdx.push(j);
+    }
+    // Worst-case (max) for wind/precip/weathercode; avg for temp
+    const slot = (from, to) => {
+      const idx = hourIdx.filter(j=>{
+        const hr = parseInt(h.time[j].slice(11,13),10);
+        return hr>=from && hr<to;
+      });
+      const temp = avg(idx.map(j=>h.temperature_2m[j]));
+      const wind = Math.max(0, ...idx.map(j=>h.windspeed_10m[j]));
+      const precip = Math.max(0, ...idx.map(j=>h.precipitation_probability[j]||0));
+      const wc = worstWc(idx.map(j=>h.weathercode[j]));
+      const ic = wcToIconCond(wc);
+      return {temp,wind:Math.round(wind),precip:Math.round(precip),weathercode:wc,icon:ic.icon,condition:ic.cond};
+    };
+    const m = slot(6,12), a = slot(12,18), e = slot(18,22);
+    out.push({
+      date, label: dayLabel(date, i),
+      high: Math.round(d.temperature_2m_max[i]),
+      low:  Math.round(d.temperature_2m_min[i]),
+      condition: dailyIconCond.cond,
+      icon: dailyIconCond.icon,
+      precip: Math.round(d.precipitation_probability_max[i]||0),
+      wind:   Math.round(d.windspeed_10m_max[i]||0),
+      uv:     Math.round(d.uv_index_max[i]||0),
+      weathercode: dailyWc,
+      tod: [
+        {period:"Morning",  ...m},
+        {period:"Afternoon",...a},
+        {period:"Evening",  ...e},
+      ]
+    });
+  }
+  return out;
+}
+
+function buildCurrentFromOpenMeteo(data){
+  const h = data.hourly;
+  const now = new Date();
+  let closestIdx = 0, closestDelta = Infinity;
+  for(let i=0;i<h.time.length;i++){
+    const t = new Date(h.time[i]);
+    const delta = Math.abs(t - now);
+    if(delta < closestDelta){ closestDelta = delta; closestIdx = i; }
+  }
+  const temp = Math.round(h.temperature_2m[closestIdx]);
+  const wind = Math.round(h.windspeed_10m[closestIdx]);
+  const ic = wcToIconCond(h.weathercode[closestIdx]);
+  const stamp = now.toLocaleDateString("en-CA",{weekday:"short",month:"short",day:"numeric"})
+              + " · " + now.toLocaleTimeString("en-CA",{hour:"numeric",minute:"2-digit"});
+  return {
+    temp: `${temp}°C`,
+    cond: `${ic.icon} ${ic.cond}`,
+    wind: `${wind} km/h · 🇨🇦 Toronto`,
+    refreshed: stamp
+  };
+}
+
+async function bootDashboard(){
+  const url = "https://api.open-meteo.com/v1/forecast"
+    + "?latitude=43.64&longitude=-79.38"
+    + "&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,windspeed_10m_max,uv_index_max"
+    + "&hourly=temperature_2m,weathercode,precipitation_probability,windspeed_10m"
+    + "&timezone=America/Toronto"
+    + "&forecast_days=7";
+  try{
+    const res = await fetch(url);
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const data = await res.json();
+    DAYS = buildDaysFromOpenMeteo(data);
+    CURRENT = buildCurrentFromOpenMeteo(data);
+  }catch(err){
+    console.error("Open-Meteo fetch failed, using fallback:", err);
+    CURRENT.refreshed = "⚠️ Live fetch failed — showing fallback · " + new Date().toLocaleString();
+  }
+
+  document.getElementById("cur-temp").textContent=CURRENT.temp;
+  document.getElementById("cur-cond").textContent=CURRENT.cond;
+  document.getElementById("cur-wind").textContent=CURRENT.wind;
+  document.getElementById("footer").textContent="Open-Meteo · "+CURRENT.refreshed;
+
+  renderCards(); renderDetail(); renderStats();
+
+  const wl=windLabel(DAYS[0].wind);
+  const el=document.getElementById("cur-wind");
+  if(el&&!el.textContent.includes(wl.label)) el.textContent=el.textContent+" · "+wl.label;
+}
+
+bootDashboard();
+</script>
+</body>
+</html>
