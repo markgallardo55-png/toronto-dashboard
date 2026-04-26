@@ -1200,9 +1200,13 @@ async function refreshTorontoEvents(){
         };
       })
       .filter(Boolean);
-    TORONTO_EVENTS.refreshedAt=new Date();
-    TORONTO_CONCERTS=TORONTO_EVENTS.filter(isConcertEvent);
-    TORONTO_CONCERTS.refreshedAt=TORONTO_EVENTS.refreshedAt;
+    const refreshedAt = new Date();
+
+TORONTO_CONCERTS = TORONTO_EVENTS.filter(isConcertEvent);
+TORONTO_EVENTS = TORONTO_EVENTS.filter(e => !isConcertEvent(e));
+
+TORONTO_EVENTS.refreshedAt = refreshedAt;
+TORONTO_CONCERTS.refreshedAt = refreshedAt;
     renderTorontoEventsWeek();
     renderConcertsWeek();
   }catch(err){
