@@ -1096,7 +1096,7 @@ function parseEspnTempoGames(data){
       meta:formatGameDate(start),
       venue:normalizeTempoVenue(comp.venue?.fullName||ev.venue?.fullName||"Coca-Cola Coliseum"),
       tag:"Home",
-      tickets:"https://www.ticketmaster.ca/toronto-tempo-tickets/artist/3373418"
+      tickets:"https://www.ticketmaster.ca/search?q=Toronto%20Tempo"
     });
   }
   return games.sort((a,b)=>new Date(a.sortDate)-new Date(b.sortDate)).slice(0,5);
