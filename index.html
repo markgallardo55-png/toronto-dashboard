@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="color-scheme" content="light only"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Toronto"/>
+<title>Toronto Weather</title>
+<style>
+:root{color-scheme:light only;--bg-000:rgb(255,255,255);--bg-100:rgb(250,249,245);--bg-200:rgb(245,244,237);--bg-300:rgb(240,238,230);--bg-400:rgb(232,230,220);--text-100:rgb(20,20,19);--text-200:rgb(61,61,58);--text-400:rgb(115,114,108);--border:rgba(31,30,29,0.12);--border-med:rgba(31,30,29,0.18);--border-strong:rgba(31,30,29,0.28);--danger:rgb(181,51,51);--danger-bg:rgba(181,51,51,0.08);--danger-border:rgba(181,51,51,0.25);--accent-coral:rgb(207,92,54);--font:"Anthropic Sans",system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--radius-sm:8px;--radius-md:12px;--radius-lg:16px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;background:#faf9f5 !important;color:#141413 !important}
+body{font-family:var(--font);background:#faf9f5 !important;color:#141413 !important;min-height:100vh;padding:40px 20px 80px;-webkit-text-size-adjust:100%}
+.wrap{max-width:900px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:20px;border-bottom:1px solid var(--border-strong);margin-bottom:24px;gap:12px}
+.city{font-size:clamp(48px,9vw,88px);font-weight:700;letter-spacing:-2px;line-height:.9;color:var(--text-100)}
+.region{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-400);margin-top:6px}
+.cur-block{text-align:right}
+.cur-temp{font-size:clamp(40px,7vw,72px);font-weight:300;line-height:1;color:var(--text-100);letter-spacing:-1px}
+.cur-cond{font-size:14px;color:var(--text-200);margin-top:4px}
+.cur-wind{font-size:11px;color:var(--text-400);margin-top:2px;letter-spacing:.5px}
+.section-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-400);margin-bottom:12px;font-weight:500}
+.divider{height:1px;background:var(--border);margin:28px 0}
+.scroll-wrap{overflow-x:auto;overflow-y:visible;margin-bottom:24px;padding-top:4px;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+.scroll-wrap::-webkit-scrollbar{height:3px}
+.scroll-wrap::-webkit-scrollbar-thumb{background:var(--border-med);border-radius:2px}
+.cards-row{display:flex;gap:8px;min-width:max-content}
+.day-card{width:118px;min-width:118px;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 12px;text-align:center;cursor:pointer;transition:all .15s ease;display:flex;flex-direction:column;-webkit-tap-highlight-color:transparent;user-select:none;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.day-card:hover{background:var(--bg-200);border-color:var(--border-med)}
+.day-card.selected{background:var(--bg-300);border-color:var(--border-strong)}
+.card-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;color:var(--text-400)}
+.day-card.selected .card-label{color:var(--text-200)}
+.card-date{font-size:10px;color:var(--text-400);margin-top:2px}
+.card-icon{height:34px;margin:10px 0 8px;display:flex;align-items:center;justify-content:center}
+.wx-icon{position:relative;width:42px;height:34px;display:inline-block}
+.wx-sun{position:absolute;width:20px;height:20px;border-radius:50%;left:11px;top:3px;background:radial-gradient(circle at 35% 30%,#fff6b9 0 18%,#ffd45b 45%,#f5a623 100%);box-shadow:0 0 0 1px rgba(196,128,22,.12),0 0 12px rgba(245,166,35,.28)}
+.wx-sun::before{content:"";position:absolute;inset:-8px;border-radius:50%;background:repeating-conic-gradient(from 0deg,rgba(245,166,35,.75) 0 8deg,transparent 8deg 32deg);-webkit-mask:radial-gradient(circle,transparent 0 14px,#000 14px 18px,transparent 18px);mask:radial-gradient(circle,transparent 0 14px,#000 14px 18px,transparent 18px)}
+.wx-cloud{position:absolute;width:30px;height:14px;border-radius:14px;left:6px;top:12px;background:linear-gradient(180deg,#d8d9d8 0%,#aeb1b3 100%);box-shadow:0 4px 8px rgba(70,75,80,.12)}
+.wx-cloud::before{content:"";position:absolute;width:16px;height:16px;border-radius:50%;left:4px;top:-8px;background:linear-gradient(180deg,#e5e6e5 0%,#bcc0c2 100%)}
+.wx-cloud::after{content:"";position:absolute;width:18px;height:18px;border-radius:50%;right:3px;top:-10px;background:linear-gradient(180deg,#dedfde 0%,#b4b8ba 100%)}
+.wx-partly .wx-sun{left:5px;top:0;transform:scale(.82)}
+.wx-partly .wx-cloud{left:12px;top:14px;transform:scale(.9)}
+.wx-rain .wx-drop,.wx-snow .wx-flake{position:absolute;top:28px;color:#3f9ee5;font-size:9px;line-height:1;font-weight:700}
+.wx-rain .wx-drop:nth-child(2){left:13px}.wx-rain .wx-drop:nth-child(3){left:22px}.wx-rain .wx-drop:nth-child(4){left:31px}
+.wx-rain .wx-drop{width:3px;height:8px;border-radius:3px;background:#4aa3df;transform:rotate(18deg)}
+.wx-snow .wx-flake{color:#7fb7df}.wx-snow .wx-flake:nth-child(2){left:12px}.wx-snow .wx-flake:nth-child(3){left:22px}.wx-snow .wx-flake:nth-child(4){left:31px}
+.wx-fog .wx-cloud{top:8px}
+.wx-fog-line{position:absolute;left:7px;right:5px;height:2px;border-radius:2px;background:#b9bdbc;opacity:.75}.wx-fog-line:nth-child(2){top:26px}.wx-fog-line:nth-child(3){top:31px;width:24px;left:12px}
+.icon-svg{width:1em;height:1em;display:inline-block;vertical-align:-.14em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.inline-icon{display:inline-flex;align-items:center;justify-content:center;width:1.15em;height:1.15em;color:currentColor;vertical-align:-.18em}
+.mini-icon{font-size:12px;color:var(--text-400);margin-right:4px}
+.title-icon{font-size:13px;color:var(--text-400);margin-right:5px}
+.current-weather-icon{display:inline-flex;align-items:center;justify-content:center;width:24px;height:18px;margin-right:4px;vertical-align:-.3em}
+.current-weather-icon .wx-icon{transform:scale(.48);transform-origin:left center}
+.tod-icon{height:34px;margin:8px 0 4px;display:flex;align-items:center;justify-content:flex-start}
+.tod-icon .card-icon{height:34px;margin:0;justify-content:flex-start}
+.tod-icon .wx-icon{transform:scale(.82);transform-origin:left center}
+.tod-paw{display:flex;gap:3px;margin-top:4px;color:var(--text-400);opacity:.75}
+.paw-dot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+.paw-dot.skip{width:8px;height:2px;border-radius:2px;transform:rotate(-45deg);margin-top:3px;background:var(--danger)}
+.metric-value{display:flex;align-items:center;gap:4px}
+.metric-value .inline-icon{color:var(--text-400);font-size:12px}
+.glyph{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:5px;background:var(--bg-300);color:var(--text-400);font-size:11px;vertical-align:-.25em;flex-shrink:0}
+.glyph-warm{background:rgba(207,92,54,.12);color:rgb(180,80,0)}
+.glyph-cool{background:rgba(74,127,165,.12);color:rgb(50,100,140)}
+.glyph-green{background:rgba(34,112,49,.12);color:rgb(34,112,49)}
+.glyph-danger{background:var(--danger-bg);color:var(--danger)}
+.card-high{font-size:22px;font-weight:600;display:block;line-height:1}
+.card-low{font-size:12px;color:var(--text-400);margin-top:3px;display:block}
+.temp-bar-wrap{margin-top:8px;height:3px;border-radius:2px;background:var(--bg-400);position:relative;overflow:hidden}
+.temp-bar{position:absolute;top:0;bottom:0;border-radius:2px;background:var(--accent-coral)}
+.walk-dot-wrap{margin-top:8px;display:flex;justify-content:center;gap:4px}
+.walk-dot{width:6px;height:6px;border-radius:50%}
+.dot-label{font-size:8px;color:var(--text-400);margin-top:3px;letter-spacing:.5px}
+.pills-area{margin-top:8px;display:flex;flex-direction:column;gap:3px;flex:1}
+.pill-slot{border-radius:6px;display:flex;flex-direction:column;justify-content:center;padding:6px 8px;overflow:hidden}
+.pill-time{font-size:10px;font-weight:600;color:var(--text-200);white-space:nowrap;line-height:1.2;text-align:left}
+.pill-title{font-size:10px;color:var(--text-200);line-height:1.35;text-align:left;word-break:break-word}
+.detail{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:24px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+
+/* TOD cards — 3-column grid on desktop, stacked on mobile */
+.tod-row{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.tod-card{padding:16px 14px;border-right:1px solid var(--border);position:relative;background:var(--bg-000)}
+.tod-card:last-child{border-right:none}
+.tod-top-bar{height:3px;position:absolute;top:0;left:0;right:0}
+.tod-period{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;color:var(--text-400);margin-top:4px}
+.tod-time{display:block;font-size:9px;color:var(--text-400);margin-top:2px;opacity:.7}
+
+/* Walk score block inside tod card */
+.tod-score-block{border-radius:10px;padding:8px 10px;margin-top:10px}
+.tod-score-label{font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px}
+.tod-score-num{font-size:22px;font-weight:700;line-height:1}
+.tod-score-slash{font-size:11px;font-weight:400;opacity:.5}
+.tod-score-denom{font-size:11px;font-weight:400;opacity:.5}
+.tod-score-word{font-size:11px;font-weight:700;margin-top:2px}
+.tod-score-bar{height:3px;border-radius:2px;margin-top:6px;overflow:hidden}
+.tod-score-bar-fill{height:100%;border-radius:2px}
+
+/* Metric mini-cards */
+.tod-metric-cards{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px}
+.tod-metric-card{background:var(--bg-200);border-radius:6px;padding:5px 7px}
+.tod-metric-card-label{font-size:8px;color:var(--text-400);font-weight:500;margin-bottom:2px}
+.tod-metric-card-value{font-size:11px;font-weight:700;color:var(--text-100)}
+.tod-metric-card-sub{font-size:9px;color:var(--text-400);margin-top:1px}
+
+/* Top section of tod card */
+.tod-cond-label{font-size:12px;font-weight:600;color:var(--text-100);margin-top:4px}
+.tod-walk-insight{font-size:10px;color:var(--text-400);margin-top:2px;line-height:1.4}
+.tod-temp-hero{font-size:24px;font-weight:700;line-height:1;color:var(--text-100);text-align:right}
+.tod-feels{font-size:10px;color:var(--text-400);margin-top:2px;text-align:right}
+.tod-paw{font-size:10px;letter-spacing:2px;opacity:.6;margin-top:2px;display:block}
+
+/* Getting Ready section */
+.tod-clothing-divider{border:none;border-top:1px solid var(--border);margin:10px 0 8px}
+.tod-ready-heading{font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-400);margin-bottom:8px}
+.tod-ready-sub{font-size:7px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-400);margin:8px 0 5px;padding-top:7px;border-top:1px solid var(--border)}
+.tod-ready-sub:first-of-type{margin-top:0;border-top:none}
+.tod-layer-row{display:flex;align-items:flex-start;gap:5px;padding:4px 0;border-bottom:1px solid var(--border)}
+.tod-layer-row:last-of-type{border-bottom:none;padding-bottom:0}
+.tod-layer-icon{font-size:11px;flex-shrink:0;margin-top:1px}
+.tod-layer-inner{flex:1}
+.tod-layer-headline{font-size:10px;font-weight:600;color:var(--text-100);line-height:1.3}
+.tod-layer-note{font-size:9px;color:var(--text-400);margin-top:1px;line-height:1.3}
+.tod-rain-alert{display:flex;align-items:flex-start;gap:5px;background:rgba(74,127,165,0.08);border:1px solid rgba(74,127,165,0.18);border-radius:5px;padding:5px 7px;margin-top:6px;margin-bottom:3px}
+.tod-rain-alert-icon{font-size:11px;flex-shrink:0;margin-top:1px}
+.tod-rain-alert-body{flex:1}
+.tod-rain-alert-title{font-size:10px;font-weight:600;color:rgb(50,100,140);margin-bottom:1px}
+.tod-rain-alert-sub{font-size:9px;color:rgb(70,120,160);line-height:1.3}
+.tod-milo-section{margin-top:0}
+.tod-milo-tip{display:flex;align-items:flex-start;gap:5px;margin-bottom:4px}
+.tod-milo-tip:last-child{margin-bottom:0}
+.tod-milo-tip-icon{font-size:11px;flex-shrink:0;margin-top:1px}
+.tod-milo-tip-text{flex:1}
+.tod-milo-tip-label{font-size:10px;font-weight:600;color:var(--text-200);margin-bottom:1px}
+.tod-milo-tip-note{font-size:9px;color:var(--text-400);line-height:1.3}
+
+/* Detail grid — events/reminders */
+.detail-grid{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--border)}
+.detail-col{padding:18px 16px;border-right:1px solid var(--border)}
+.detail-col:last-child{border-right:none}
+.detail-col-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:600;color:var(--text-400);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.no-events{font-size:11px;color:var(--text-400);font-style:italic}
+.event-pill{padding:10px 12px;border-radius:var(--radius-sm);background:var(--bg-200);border-left:3px solid transparent;margin-bottom:8px;display:flex;align-items:flex-start;gap:8px}
+.event-title{font-size:11px;font-weight:600;color:var(--text-100);margin-bottom:2px;line-height:1.3}
+.event-time{font-size:10px;color:var(--text-400)}
+.event-loc{font-size:10px;color:var(--text-400);margin-top:2px}
+.event-cal{font-size:9px;letter-spacing:.5px;white-space:nowrap;padding-top:1px;flex-shrink:0;font-weight:600}
+.around-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-400);margin:10px 0 6px;padding-top:8px;border-top:1px dashed var(--border)}
+.reminder-pill{padding:7px 10px;border-radius:var(--radius-sm);background:var(--bg-200);border-left:3px solid transparent;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.reminder-pill-overdue{padding:7px 10px;border-radius:var(--radius-sm);background:var(--danger-bg);border-left:3px solid var(--danger);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.reminder-title{font-size:11px;font-weight:600;color:var(--text-100);flex:1;line-height:1.3}
+.reminder-title-overdue{font-size:11px;font-weight:600;color:var(--danger);flex:1;line-height:1.3}
+.reminder-list-tag{font-size:9px;letter-spacing:.5px;color:var(--text-400);white-space:nowrap;font-weight:500}
+.reminder-divider{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-400);margin:12px 0 8px;padding-top:10px;border-top:1px dashed var(--border);font-weight:500}
+.reminder-overdue-divider{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--danger);margin:12px 0 8px;padding-top:10px;border-top:1px dashed var(--danger-border);font-weight:500}
+
+/* Stats grid */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
+.stat-box{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.stat-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-400);margin-bottom:4px;font-weight:500}
+.stat-val{font-size:26px;font-weight:700;color:var(--text-100);line-height:1}
+.stat-unit{font-size:11px;color:var(--text-400);margin-top:3px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid var(--border)}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text-400);letter-spacing:1px;text-transform:uppercase}
+.legend-dot{width:7px;height:7px;border-radius:50%}
+
+/* Sports / Events / Food */
+.city-section{margin-top:24px}
+.city-section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:10px}
+.city-section-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-400);font-weight:600}
+.city-section-meta{font-size:10px;color:var(--text-400);text-align:right}
+.city-col{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.sport-item{padding:10px 0;border-bottom:1px solid var(--border)}
+.sport-item:last-child{border-bottom:none;padding-bottom:0}
+.sport-item-title{font-size:11px;font-weight:600;color:var(--text-100);margin-bottom:3px;line-height:1.3}
+.sport-item-meta{font-size:10px;color:var(--text-400);line-height:1.4}
+.sport-empty{font-size:11px;color:var(--text-400);font-style:italic}
+.sport-tag{display:inline-block;font-size:9px;letter-spacing:1px;text-transform:uppercase;border-radius:4px;padding:2px 7px;margin-top:4px;font-weight:600;border:1px solid transparent}
+.home-tag{background:rgba(34,112,49,.1);color:rgb(34,112,49);border-color:rgba(34,112,49,.2)}
+.event-item{padding:10px 0;border-bottom:1px solid var(--border)}
+.event-item:last-child{border-bottom:none;padding-bottom:0}
+.event-item-title{font-size:11px;font-weight:600;color:var(--text-100);margin-bottom:3px;line-height:1.3}
+.event-item-meta{font-size:10px;color:var(--text-400);line-height:1.5}
+.event-tag{display:inline-block;font-size:9px;letter-spacing:1px;text-transform:uppercase;border-radius:4px;padding:2px 7px;margin-top:4px;font-weight:600;border:1px solid transparent}
+.food-cat-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:6px;margin-top:16px}
+.food-cat-label:first-child{margin-top:0}
+.food-item{padding:7px 0;border-bottom:1px solid var(--border)}
+.food-item:last-child{border-bottom:none}
+.food-item-name{font-size:11px;font-weight:600;color:var(--text-100);margin-bottom:2px}
+.food-item-addr{font-size:10px;color:var(--text-400);margin-bottom:3px}
+.food-item-vibe{font-size:10px;color:var(--text-400);line-height:1.4;opacity:.85}
+.seasonal-badge{display:inline-block;font-size:9px;letter-spacing:1px;text-transform:uppercase;border-radius:4px;padding:2px 6px;margin-top:4px;font-weight:600;background:rgba(207,92,54,.1);color:rgb(207,92,54);border:1px solid rgba(207,92,54,.25)}
+.wind-pill{display:inline-flex;align-items:center;padding:1px 7px;border-radius:20px;font-size:9px;font-weight:600;letter-spacing:.3px;vertical-align:middle;margin-left:3px}
+.w-calm{background:rgba(34,197,94,.12);color:rgb(21,128,61)}
+.w-light{background:rgba(20,184,166,.12);color:rgb(15,118,110)}
+.w-breezy{background:rgba(59,130,246,.12);color:rgb(29,78,216)}
+.w-windy{background:rgba(251,146,60,.14);color:rgb(154,52,18)}
+.w-vwindy{background:rgba(239,68,68,.12);color:rgb(153,27,27)}
+.w-strong{background:rgba(139,92,246,.14);color:rgb(76,29,149)}
+.walk-great{color:rgb(34,112,49)}.walk-decent{color:rgb(160,100,0)}.walk-tough{color:rgb(180,80,0)}.walk-skip{color:var(--danger)}
+.footer{margin-top:24px;text-align:center;font-size:11px;color:var(--text-400);letter-spacing:.5px}
+@media(prefers-color-scheme:dark){:root{color-scheme:light only}html,body{background:#faf9f5 !important;color:#141413 !important}.day-card{background:#ffffff !important;color:#141413 !important}.day-card.selected{background:#f0ede6 !important}.detail,.tod-card,.stat-box,.city-col{background:#ffffff !important;color:#141413 !important}}
+@media(max-width:680px){.tod-row{grid-template-columns:1fr}.tod-card{border-right:none;border-bottom:1px solid var(--border)}.tod-card:last-child{border-bottom:none}.detail-grid{grid-template-columns:1fr}.detail-col{border-right:none!important;border-bottom:1px solid var(--border)}.detail-col:last-child{border-bottom:none}.stats-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div><div class="city">Toronto</div><div class="region">Ontario · Canada</div></div>
+    <div class="cur-block">
+      <div class="cur-temp" id="cur-temp"></div>
+      <div class="cur-cond" id="cur-cond"></div>
+      <div class="cur-wind" id="cur-wind"></div>
+    </div>
+  </div>
+  <div class="section-label">7-Day Forecast</div>
+  <div class="scroll-wrap"><div class="cards-row" id="cards-row"></div></div>
+  <div class="detail" id="detail"></div>
+  <div class="stats-grid" id="stats-grid"></div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:rgb(34,112,49)"></div>Great walk</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgb(160,100,0)"></div>Decent walk</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgb(180,80,0)"></div>Tough walk</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgb(181,51,51)"></div>Stay inside</div>
+  </div>
+  <section class="city-section" id="sports-week-section">
+    <div class="city-section-head">
+      <div class="city-section-title">Home Games · Next 7 Days</div>
+      <div class="city-section-meta" id="sports-week-meta">Refreshing…</div>
+    </div>
+    <div id="sports-week-col"></div>
+  </section>
+  <section class="city-section" id="toronto-events-section">
+    <div class="city-section-head">
+      <div class="city-section-title">Toronto Events · Next 7 Days</div>
+      <div class="city-section-meta" id="toronto-events-meta">Refreshing…</div>
+    </div>
+    <div id="toronto-events-col"></div>
+  </section>
+  <section class="city-section" id="concerts-section">
+    <div class="city-section-head">
+      <div class="city-section-title">Concerts · Next 7 Days</div>
+      <div class="city-section-meta" id="concerts-meta">Refreshing…</div>
+    </div>
+    <div id="concerts-col"></div>
+  </section>
+  <section class="city-section" id="sports-section">
+    <div class="city-section-head">
+      <div class="city-section-title">TFC Home Games</div>
+      <div class="city-section-meta" id="sports-meta">Refreshing on open…</div>
+    </div>
+    <div id="sports-col"></div>
+  </section>
+  <section class="city-section" id="raptors-section">
+    <div class="city-section-head">
+      <div class="city-section-title">Raptors Home Games</div>
+      <div class="city-section-meta" id="raptors-meta">Refreshing on open…</div>
+    </div>
+    <div id="raptors-col"></div>
+  </section>
+  <section class="city-section" id="blue-jays-section">
+    <div class="city-section-head">
+      <div class="city-section-title">Blue Jays Home Games</div>
+      <div class="city-section-meta" id="blue-jays-meta">Refreshing on open…</div>
+    </div>
+    <div id="blue-jays-col"></div>
+  </section>
+  <section class="city-section" id="tempo-section">
+    <div class="city-section-head">
+      <div class="city-section-title">Tempo Home Games</div>
+      <div class="city-section-meta" id="tempo-meta">Refreshing on open…</div>
+    </div>
+    <div id="tempo-col"></div>
+  </section>
+  <section class="city-section" id="sceptres-section">
+    <div class="city-section-head">
+      <div class="city-section-title">Sceptres Home Games</div>
+      <div class="city-section-meta" id="sceptres-meta">Refreshing on open…</div>
+    </div>
+    <div id="sceptres-col"></div>
+  </section>
+  <div class="footer" id="footer"></div>
+</div>
+
+<script>
+// ██████  DATA BLOCK — only this section changes on every refresh  ██████
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// CURRENT and DAYS are populated live from Open-Meteo on page load.
+// Values here are fallbacks shown only if the fetch fails.
+let CURRENT = {
+  temp:"—", cond:"Loading…", wind:"Toronto",
+  refreshed:"Fetching live data…", weathercode:null
+};
+
+// TFC: https://raw.githubusercontent.com/jbaranski/majorleaguesoccer-ical/refs/heads/main/calendars/torontofc.ics
+// Sceptres: web search · MLB/NBA/WNBA: fetch_sports_data
+// Toronto Tempo: fetch_sports_data league="wnba" team="Toronto Tempo" — season starts Apr 29 preseason / May 8 regular
+// ⏰ REFRESH PROTOCOL: call user_time_v0 in parallel with every refresh
+//    Only set overdue:true if reminder due datetime is BEFORE current time (not just same date)
+
+// DAYS is populated live from Open-Meteo on page load (see buildDaysFromOpenMeteo).
+// This minimal placeholder only shows if the fetch fails and nothing renders.
+let DAYS = [
+  {date:new Date().toISOString().slice(0,10),label:"Today",high:0,low:0,condition:"Loading…",icon:"⏳",precip:0,wind:0,uv:0,weathercode:0,
+    tod:[
+      {period:"Morning",  icon:"⏳",condition:"Loading…",precip:0,wind:0,temp:0,weathercode:0},
+      {period:"Afternoon",icon:"⏳",condition:"Loading…",precip:0,wind:0,temp:0,weathercode:0},
+      {period:"Evening",  icon:"⏳",condition:"Loading…",precip:0,wind:0,temp:0,weathercode:0},
+    ]},
+];
+
+const EVENTS = [];
+
+const CITY_BY_DATE = {};
+
+let CITY_SPORTS = [];
+let RAPTORS_GAMES = [];
+let BLUE_JAYS_GAMES = [];
+let TEMPO_GAMES = [];
+let SCEPTRES_GAMES = [];
+let TORONTO_EVENTS = [];
+let TORONTO_CONCERTS = [];
+let VENUE_CONCERTS = [];
+const SPORTS_REFRESHED = {};
+
+const CITY_EVENTS = [];
+
+const CITY_FOOD = [
+  {title:"Goppion Caffetteria",icon:"coffee",iconTone:"glyph-warm",address:"60 Fort York Blvd · Fort York",       vibe:"Tiny Italian espresso bar steps from home. Warm owner, dog-friendly, 4.9★.",   category:"King West · Fort York", catColor:"rgb(180,80,0)",   query:"Goppion Caffetteria Fort York Toronto",     seasonal:true},
+  {title:"Oretta Caffè",      icon:"coffee",iconTone:"glyph-warm",address:"King St W & Bathurst · Fort York",    vibe:"Italian espresso behind the colourful Oretta restaurant. Quiet & distinctive.", category:"King West · Fort York", catColor:"rgb(180,80,0)",   query:"Oretta Caffe King Bathurst Toronto",        seasonal:false},
+  {title:"Fix Coffee + Bikes",  icon:"bike",iconTone:"glyph-cool", address:"486 Front St W · The Well",           vibe:"Specialty coffee meets bike shop. Mavam espresso, house-made snacks.",          category:"King West · Fort York", catColor:"rgb(180,80,0)",   query:"Fix Coffee Bikes The Well Toronto",          seasonal:false},
+  {title:"Balzac's Coffee",     icon:"coffee",iconTone:"glyph-warm",address:"43 Hanna Ave · Liberty Village",      vibe:"Heritage brick, airy space. Solid roasts, Parisian-inspired.",                  category:"Liberty Village",           catColor:"rgb(60,130,80)",  query:"Balzac's Coffee Liberty Village Toronto",    seasonal:false},
+  {title:"Arvo Coffee",         icon:"sun",iconTone:"glyph-warm",   address:"Liberty Village",                         vibe:"Aussie-style flat whites, casual and well-reviewed.",                           category:"Liberty Village",           catColor:"rgb(60,130,80)",  query:"Arvo Coffee Liberty Village Toronto",         seasonal:false},
+  {title:"Forget Me Not Cafe",  icon:"sun",iconTone:"glyph-warm", address:"Ossington Ave · Ossington",          vibe:"Beloved neighbourhood staple. Great espresso, cozy and unhurried.",             category:"Ossington · Trinity",  catColor:"rgb(140,70,160)", query:"Forget Me Not Cafe Ossington Toronto",         seasonal:false},
+  {title:"Found Coffee",        icon:"leaf",iconTone:"glyph-green", address:"Shaw St · near Trinity Bellwoods",   vibe:"Leafy backyard patio, banana bread latte. Aussie-influenced.",                  category:"Ossington · Trinity",  catColor:"rgb(140,70,160)", query:"Found Coffee Shaw St Toronto",                 seasonal:false},
+  {title:"Sam James Coffee Bar",icon:"coffee",iconTone:"glyph-warm",address:"917 Queen St W · Trinity Bellwoods", vibe:"Minimalist espresso bar across from the park. Some of the best shots.",          category:"Ossington · Trinity",  catColor:"rgb(140,70,160)", query:"Sam James Coffee Bar Queen West Toronto",      seasonal:false},
+  {title:"Misc Coffee",         icon:"coffee",iconTone:"",          address:"299 Ossington Ave · Ossington",       vibe:"Mint-green tiles, calm vibe. Pandan iced latte & fruit-noted espresso.",        category:"Ossington · Trinity",  catColor:"rgb(140,70,160)", query:"Misc Coffee 299 Ossington Toronto",             seasonal:false},
+  {title:"Cafe 23",             icon:"leaf",iconTone:"glyph-green", address:"728 Queen St W · West Queen West",    vibe:"Secret garden patio, Parisian vibes, Montreal bagels. Hidden gem.",             category:"Ossington · Trinity",  catColor:"rgb(140,70,160)", query:"Cafe 23 Queen West Toronto",                   seasonal:false},
+];
+
+const LIST_COLORS = {
+  "ToDo":"rgb(207,92,54)","Weekly":"rgb(255,41,104)","Monthly":"rgb(27,173,248)",
+  "Mom":"rgb(0,122,255)","Property Tax 2026":"rgb(217,166,159)","Shared":"rgb(204,115,225)",
+  "Grocery":"rgb(99,218,56)","Dad's Affairs":"rgb(0,122,255)"
+};
+
+const REMINDERS = [];
+
+// ██████  TEMPLATE — frozen, never changes  ██████
+// ═══════════════════════════════════════════════════════════════════════════════
+
+document.getElementById("cur-temp").textContent=CURRENT.temp;
+document.getElementById("cur-cond").innerHTML=(CURRENT.weathercode==null?"":weatherIcon(CURRENT.weathercode,"current-weather-icon"))+CURRENT.cond;
+document.getElementById("cur-wind").textContent=CURRENT.wind;
+document.getElementById("footer").textContent=CURRENT.refreshed;
+
+// ── HELPERS ──
+function eventsFor(d){return EVENTS.filter(e=>e.date===d)}
+function remindersFor(d){return REMINDERS.filter(r=>r.date===d)}
+function cityEventsFor(d){return CITY_BY_DATE[d]||[]}
+function windChill(temp,wind){if(temp>10||wind<5)return temp;return Math.round(13.12+0.6215*temp-11.37*Math.pow(wind,0.16)+0.3965*temp*Math.pow(wind,0.16))}
+function rgba(rgb,a){return rgb.replace('rgb(','rgba(').replace(')',`,${a})`)}
+function mapsLink(q,l){return`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}" target="_blank" style="color:inherit;border-bottom:1px solid rgba(31,30,29,0.2);text-decoration:none">${l}</a>`}
+function windLabel(w){if(w<=10)return{label:"Calm",cls:"w-calm"};if(w<=20)return{label:"Light breeze",cls:"w-light"};if(w<=30)return{label:"Breezy",cls:"w-breezy"};if(w<=40)return{label:"Windy",cls:"w-windy"};if(w<=55)return{label:"Very windy",cls:"w-vwindy"};return{label:"Strong wind",cls:"w-strong"}}
+function windPill(w){const wl=windLabel(w);return`<span class="wind-pill ${wl.cls}">${wl.label}</span>`}
+function uvLabel(u){return(["Low","Low","Moderate","Moderate","High","High","High","Very High"][Math.min(u,7)])||"Low"}
+function tempColor(t){if(t<=-10)return"rgb(96,130,220)";if(t<=0)return"rgb(80,140,210)";if(t<=5)return"rgb(60,120,180)";if(t<=12)return"rgb(160,100,0)";if(t<=20)return"rgb(180,80,0)";return"rgb(181,51,51)"}
+function svgIcon(name,cls="inline-icon"){
+  const p={
+    clock:`<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>`,
+    pin:`<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle>`,
+    basketball:`<circle cx="12" cy="12" r="9"></circle><path d="M4.8 8.2c4.8 2.5 9.6 2.5 14.4 0M4.8 15.8c4.8-2.5 9.6-2.5 14.4 0M12 3v18M3 12h18"></path>`,
+    soccer:`<circle cx="12" cy="12" r="9"></circle><path d="m12 7 4 3-1.5 5h-5L8 10l4-3Z"></path><path d="M12 7V3M16 10l4-1M14.5 15l2.5 4M9.5 15 7 19M8 10 4 9"></path>`,
+    baseball:`<circle cx="12" cy="12" r="9"></circle><path d="M7.3 5.7c1.5 1.9 2.2 4 2.2 6.3s-.7 4.4-2.2 6.3M16.7 5.7c-1.5 1.9-2.2 4-2.2 6.3s.7 4.4 2.2 6.3"></path><path d="M8.7 8.5 7.2 7.6M9.4 11 7.7 10.4M9.4 13l-1.7.6M8.7 15.5l-1.5.9M15.3 8.5l1.5-.9M14.6 11l1.7-.6M14.6 13l1.7.6M15.3 15.5l1.5.9"></path>`,
+    hockey:`<path d="M17 4h3l-4 13H7a3 3 0 0 0 0 6h4"></path><path d="M14 17 18 4M5 20h10M4 16h8"></path>`,
+    calendar:`<rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4M16 3v4M4 10h16"></path>`,
+    list:`<path d="M8 6h12M8 12h12M8 18h12"></path><path d="M4 6h.01M4 12h.01M4 18h.01"></path>`,
+    alert:`<path d="M12 3 22 20H2L12 3Z"></path><path d="M12 9v5M12 17h.01"></path>`,
+    rain:`<path d="M7 15a4 4 0 0 1 1-7 5 5 0 0 1 9.6 2A3 3 0 0 1 17 16H7Z"></path><path d="M8 20l1-2M12 21l1-2M16 20l1-2"></path>`,
+    drop:`<path d="M12 3s6 6 6 11a6 6 0 0 1-12 0c0-5 6-11 6-11Z"></path>`,
+    wind:`<path d="M3 8h12a3 3 0 1 0-3-3"></path><path d="M3 12h17"></path><path d="M3 16h11a3 3 0 1 1-3 3"></path>`,
+    jacket:`<path d="M8 4 5 7v13h14V7l-3-3"></path><path d="M8 4c1.5 2 6.5 2 8 0M12 7v13M8 11h2M14 11h2"></path>`,
+    shirt:`<path d="M9 4 5 6 3 10l4 2v8h10v-8l4-2-2-4-4-2c-1 2-5 2-6 0Z"></path>`,
+    shoe:`<path d="M4 15c3 1 5 1 8-1l3 3h5v3H5c-2 0-3-2-1-5Z"></path><path d="M12 14v3M9 15v2"></path>`,
+    towel:`<path d="M7 4h10v12a5 5 0 0 1-10 0V4Z"></path><path d="M7 9h10M9 16h6"></path>`,
+    heart:`<path d="M20.8 5.8a5.4 5.4 0 0 0-7.6 0L12 7l-1.2-1.2a5.4 5.4 0 1 0-7.6 7.6L12 22l8.8-8.6a5.4 5.4 0 0 0 0-7.6Z"></path>`,
+    check:`<path d="m5 12 4 4L19 6"></path>`,
+    brush:`<path d="M4 20h7"></path><path d="M14 4 6 12l6 6 8-8-6-6Z"></path><path d="m6 12-2 6 6-2"></path>`,
+    paw:`<circle cx="7" cy="8" r="2"></circle><circle cx="12" cy="6" r="2"></circle><circle cx="17" cy="8" r="2"></circle><path d="M6.5 17c0-3 2.5-5 5.5-5s5.5 2 5.5 5c0 2-2 3-3.7 2.2a4.2 4.2 0 0 0-3.6 0C8.5 20 6.5 19 6.5 17Z"></path>`,
+    coffee:`<path d="M5 8h11v6a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5V8Z"></path><path d="M16 10h2a2 2 0 0 1 0 4h-2M7 3v2M11 3v2M15 3v2"></path>`,
+    bike:`<circle cx="6" cy="17" r="4"></circle><circle cx="18" cy="17" r="4"></circle><path d="M8 17h4l3-6h-4l-3 6ZM12 17l-3-6M14 7h3"></path>`,
+    leaf:`<path d="M20 4C11 4 5 9 5 17c0 2 1 3 3 3 8 0 12-7 12-16Z"></path><path d="M5 20c3-6 7-9 14-14"></path>`,
+    sun:`<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>`,
+    ticket:`<path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V7Z"></path><path d="M13 5v14"></path>`
+  }[name]||`<circle cx="12" cy="12" r="8"></circle>`;
+  return`<span class="${cls}" aria-hidden="true"><svg class="icon-svg" viewBox="0 0 24 24">${p}</svg></span>`;
+}
+function glyphIcon(name,tone=""){return`<span class="glyph ${tone}" aria-hidden="true">${svgIcon(name,"inline-icon")}</span>`}
+function weatherIcon(wc,cls="card-icon"){
+  if(wc===0)return`<span class="${cls}" aria-hidden="true"><span class="wx-icon wx-clear"><span class="wx-sun"></span></span></span>`;
+  if(wc===1||wc===2)return`<span class="${cls}" aria-hidden="true"><span class="wx-icon wx-partly"><span class="wx-sun"></span><span class="wx-cloud"></span></span></span>`;
+  if(wc===45||wc===48)return`<span class="${cls}" aria-hidden="true"><span class="wx-icon wx-fog"><span class="wx-cloud"></span><span class="wx-fog-line"></span><span class="wx-fog-line"></span></span></span>`;
+  if([51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(wc))return`<span class="${cls}" aria-hidden="true"><span class="wx-icon wx-rain"><span class="wx-cloud"></span><span class="wx-drop"></span><span class="wx-drop"></span><span class="wx-drop"></span></span></span>`;
+  if([71,73,75,77,85,86].includes(wc))return`<span class="${cls}" aria-hidden="true"><span class="wx-icon wx-snow"><span class="wx-cloud"></span><span class="wx-flake">*</span><span class="wx-flake">*</span><span class="wx-flake">*</span></span></span>`;
+  return`<span class="${cls}" aria-hidden="true"><span class="wx-icon wx-cloudy"><span class="wx-cloud"></span></span></span>`;
+}
+function cardWeatherIcon(wc){return weatherIcon(wc,"card-icon")}
+function pawMarks(kind){
+  if(kind==="skip")return`<span class="paw-dot skip"></span>`;
+  const n=kind==="great"?3:kind==="decent"?2:1;
+  return Array.from({length:n},()=>`<span class="paw-dot"></span>`).join("");
+}
+function namedIcon(name){
+  const map={coffee:["coffee","glyph-warm"],bike:["bike","glyph-cool"],sun:["sun","glyph-warm"],leaf:["leaf","glyph-green"],home:["pin","glyph-green"],ticket:["ticket","glyph-cool"],calendar:["calendar","glyph-cool"],basketball:["basketball","glyph-warm"],soccer:["soccer","glyph-green"],baseball:["baseball","glyph-cool"],hockey:["hockey","glyph-cool"]};
+  const [icon,tone]=map[name]||["coffee",""];
+  return glyphIcon(icon,tone);
+}
+
+function walkScore(precip,wind,temp,alert,wc){
+  let s=100;if(alert)s-=50;
+  if(wc!=null){if([95,96,99].includes(wc))s-=60;else if([65,75,82,86].includes(wc))s-=45;else if([61,71,80,85].includes(wc))s-=30;else if([63,73,81].includes(wc))s-=20;else if([51,53,55,77].includes(wc))s-=12;else if([45,48].includes(wc))s-=15;else if(wc===3)s-=5;}
+  else{if(precip>=80)s-=40;else if(precip>=60)s-=25;else if(precip>=40)s-=15;else if(precip>=20)s-=8;}
+  const felt=windChill(temp,wind);
+  if(temp<=10){if(felt<=-20)s-=45;else if(felt<=-15)s-=35;else if(felt<=-10)s-=22;else if(felt<=-5)s-=12;else if(felt<=-2)s-=6;if(wind>=50)s-=10;else if(wind>=35)s-=5;}
+  else{if(wind>=50)s-=25;else if(wind>=35)s-=15;else if(wind>=25)s-=8;else if(wind>=18)s-=3;
+    // Pleasant temp bonus only if it's not raining/snowing/foggy
+    const wetCodesForBonus=[45,48,51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86,95,96,99];
+    const isWetForBonus = wc!=null && wetCodesForBonus.includes(wc);
+    if(temp>=10&&temp<=22&&!isWetForBonus&&precip<30)s+=8;
+  }
+  return Math.max(0,Math.min(100,s));
+}
+function ratingFromScore(s, wc=null){
+  // Wet-weather hard cap: if it's actively raining/snowing/storming,
+  // cap label at "Decent" — common sense override regardless of score
+  const wetHazardCodes=[51,53,55,56,57,61,63,65,66,67,71,73,75,80,81,82,85,86,95,96,99];
+  const isWet = wc!=null && wetHazardCodes.includes(wc);
+  if(s>=75 && !isWet) return{label:"Great", cls:"walk-great",dot:"rgb(34,112,49)", paw:"great", bar:"rgb(34,112,49)"};
+  if(s>=75 &&  isWet) return{label:"Decent",cls:"walk-decent",dot:"rgb(160,100,0)",paw:"decent",bar:"rgb(160,100,0)"};
+  if(s>=50)           return{label:"Decent",cls:"walk-decent",dot:"rgb(160,100,0)",paw:"decent",bar:"rgb(160,100,0)"};
+  if(s>=25)           return{label:"Tough", cls:"walk-tough", dot:"rgb(180,80,0)", paw:"tough", bar:"rgb(180,80,0)"};
+  return              {label:"Skip",  cls:"walk-skip",  dot:"rgb(181,51,51)",paw:"skip",  bar:"rgb(181,51,51)"};
+}
+
+// ── GETTING READY LOGIC (Milo: Aussiedoodle, 45lb, curly coat, has orange rain jacket) ──
+function miloTipsForTod(t,prevTod){
+  const felt=windChill(t.temp,t.wind);
+  const wc=t.weathercode??null;
+  const wetCodes=[51,53,55,61,63,65,71,73,75,77,80,81,82,85,86,95,96,99];
+  const isWet=wetCodes.includes(wc)||(wc===null&&t.precip>=30);
+  const isVeryWet=[61,63,65,80,81,82,95,96,99].includes(wc)||(wc===null&&t.precip>=60)||t.alert;
+  const recentRain=prevTod&&(prevTod.precip>=40||wetCodes.includes(prevTod.weathercode??-1));
+  const wetGround=recentRain||isVeryWet;
+  const mudRisk=wetGround&&t.precip>=30;
+  const coldStress=felt<=-5;
+  const tips=[];
+
+  if(isVeryWet&&coldStress){
+    tips.push({icon:"heart",tone:"glyph-warm",label:"Put his jacket on",note:"Heavy rain + cold — orange shell on"});
+    tips.push({icon:"towel",tone:"glyph-cool",label:"Towel at the door",note:"Curly coat still needs a dry-off"});
+  } else if(isVeryWet){
+    tips.push({icon:"heart",tone:"glyph-warm",label:"Jacket recommended",note:"Cuts post-walk dry-off significantly"});
+    tips.push({icon:"towel",tone:"glyph-cool",label:"Towel at the door",note:"Curly coat still holds moisture"});
+  } else if(isWet){
+    tips.push({icon:"brush",tone:"glyph-cool",label:"Quick wipe-down",note:"Check ears and paws after"});
+  }
+  if(mudRisk){tips.push({icon:"paw",tone:"",label:"Paw check at door",note:"Mud between toes — wipe at door"});}
+  else if(wetGround){tips.push({icon:"paw",tone:"",label:"Check paws",note:"Wet ground — mud likely on trails"});}
+  if(coldStress&&!isVeryWet){tips.push({icon:"heart",tone:"glyph-warm",label:"Consider his jacket",note:`Feels ${felt}° — jacket helps`});}
+  if(!tips.length){tips.push({icon:"check",tone:"glyph-green",label:"All clear for Milo",note:"Good to go"});}
+
+  const dogHTML=tips.map(tp=>`<div class="tod-milo-tip"><div class="tod-milo-tip-icon">${glyphIcon(tp.icon,tp.tone)}</div><div class="tod-milo-tip-text"><div class="tod-milo-tip-label">${tp.label}</div><div class="tod-milo-tip-note">${tp.note}</div></div></div>`).join("");
+  return`<div class="tod-milo-section"><div class="tod-ready-sub">For Milo ${svgIcon("paw","mini-icon")}</div>${dogHTML}</div>`;
+}
+
+function clothingForTod(t,prevTod=null){
+  const felt=windChill(t.temp,t.wind);
+  const wc=t.weathercode??null;
+  const wetCodes=[51,53,55,61,63,65,71,73,75,77,80,81,82,85,86,95,96,99];
+  const isWet=wetCodes.includes(wc)||(wc===null&&t.precip>=30);
+  const isVeryWet=[61,63,65,80,81,82,95,96,99].includes(wc)||(wc===null&&t.precip>=60)||t.alert;
+  const layers=[];
+  const youTips=[];
+
+  // Base layer: felt ≤6°C always; felt 7–10°C + wind ≥15 km/h
+  if(felt<=6||(felt<=10&&t.wind>=15)){
+    layers.push({icon:"shirt",piece:"Thin synthetic base",
+      note:felt<=2?"Serious cold — layer up":t.wind>=15?"Wind chill — helps regulate heat":"Moisture management"});
+  }
+
+  // Insulating layer
+  if(t.temp<=15){
+    let piece,note;
+    if(felt<=-8){piece="Down jacket";note="Add shell if rain picks up";}
+    else if(isWet&&t.temp<=12){piece="Light puffer (standalone)";note="Handles light drizzle";}
+    else if(t.temp<=8){piece="Light puffer or fleece";note="Works standalone in dry conditions";}
+    else{piece="Light puffer or fleece";note="Standalone for this temp range";}
+    layers.push({icon:"jacket",piece,note});
+  }
+
+  // Shell layer
+  let shell=null,shellNote=null,alertTitle=null,alertSub=null;
+  if(isVeryWet&&felt<=-2){shell="Waterproof shell";shellNote="Heavy rain + cold — wear it";alertTitle="Heavy rain + cold";alertSub="Full shell on — don't leave it behind";}
+  else if(isVeryWet){shell="Ultralight waterproof shell";shellNote="Wear it";alertTitle="Heavy showers expected";alertSub="Don't leave without your shell";}
+  else if(isWet&&t.precip>=40){shell="Ultralight waterproof shell";shellNote=t.precip>=60?"Showers likely — wear it":"Carry it or wear it";if(t.precip>=60){alertTitle="Showers likely";alertSub="Keep your shell on or within reach";}}
+  else if(t.precip>=30){shell="Ultralight shell (optional)";shellNote="30% — toss it in your bag";}
+  if(shell) layers.push({icon:"rain",piece:shell,note:shellNote});
+
+  // Waterproof shoes
+  const recentRain=prevTod&&(prevTod.precip>=40);
+  if(isVeryWet||isWet||recentRain){youTips.push({icon:"shoe",piece:"Waterproof shoes",note:"Skip the runners today"});}
+
+  const alertHTML=alertTitle?`<div class="tod-rain-alert"><div class="tod-rain-alert-icon">${glyphIcon("rain","glyph-cool")}</div><div class="tod-rain-alert-body"><div class="tod-rain-alert-title">${alertTitle}</div><div class="tod-rain-alert-sub">${alertSub}</div></div></div>`:"";
+  const totalCount=layers.length+youTips.length;
+  if(!totalCount&&!alertHTML) return`<hr class="tod-clothing-divider"><div class="tod-ready-heading">Getting Ready</div><div class="tod-ready-sub">For You</div><div style="font-size:10px;color:var(--text-400);font-style:italic">T-shirt weather ${svgIcon("sun","mini-icon")}</div>`+miloTipsForTod(t,prevTod);
+
+  const layerHTML=layers.map(l=>`<div class="tod-layer-row"><div class="tod-layer-icon">${glyphIcon(l.icon,l.icon==="rain"?"glyph-cool":"")}</div><div class="tod-layer-inner"><div class="tod-layer-headline">${l.piece}</div>${l.note?`<div class="tod-layer-note">${l.note}</div>`:""}</div></div>`).join("");
+  const youHTML=youTips.map(tp=>`<div class="tod-layer-row"><div class="tod-layer-icon">${glyphIcon(tp.icon,"")}</div><div class="tod-layer-inner"><div class="tod-layer-headline">${tp.piece}</div><div class="tod-layer-note">${tp.note}</div></div></div>`).join("");
+  return`<hr class="tod-clothing-divider"><div class="tod-ready-heading">Getting Ready</div><div class="tod-ready-sub">For You · ${totalCount} layer${totalCount!==1?"s":""}</div>${alertHTML}${layerHTML}${youHTML}`+miloTipsForTod(t,prevTod);
+}
+
+// ── WALK INFO (full info for day-level) ──
+function walkInfo(day,tod=null){
+  const temp=tod?tod.temp:day.high;
+  const wind=tod?tod.wind:day.wind;
+  const precip=tod?tod.precip:day.precip;
+  const wc=tod?(tod.weathercode??null):(day.weathercode??null);
+  const alert=(tod?tod.alert:day.alert)||false;
+  const s=walkScore(precip,wind,temp,alert,wc);
+  const r=ratingFromScore(s,wc);
+  const felt=windChill(temp,wind);
+  return{score:s,felt,...r};
+}
+
+// Recomputed in renderCards() so live data refreshes the temp-bar scale
+let minAll=0,maxAll=0,span=1;
+let sel=0;
+
+function renderCards(){
+  // Recompute temperature scale from live data
+  minAll=Math.min(...DAYS.map(d=>d.low));
+  maxAll=Math.max(...DAYS.map(d=>d.high));
+  span=maxAll-minAll||1;
+  const row=document.getElementById("cards-row");row.innerHTML="";
+  DAYS.forEach((day,i)=>{
+    const evs=eventsFor(day.date);
+    const isSel=i===sel;
+    const bl=(day.low-minAll)/span*55+15,bw=Math.max((day.high-day.low)/span*50+10,8);
+    const dateStr=new Date(day.date+"T12:00:00").toLocaleDateString("en-CA",{month:"short",day:"numeric"});
+    const todDots=day.tod.map(t=>`<div class="walk-dot" style="background:${ratingFromScore(walkScore(t.precip,t.wind,t.temp,t.alert||false,t.weathercode??null),t.weathercode??null).dot}"></div>`).join("");
+
+    // Pills: events + reminders (deduped) + city games
+    const rems=remindersFor(day.date).filter(r=>!r.overdue);
+    const evTitles=new Set(evs.map(e=>e.title.replace(/[^\w\s]/g,"").trim().toLowerCase()));
+    const dedupedRems=rems.filter(r=>!evTitles.has(r.title.replace(/[^\w\s]/g,"").trim().toLowerCase()));
+    const allPills=[...evs.map(e=>({type:"event",item:e})),...dedupedRems.map(r=>({type:"reminder",item:r}))];
+    const maxPills=2;
+    let pills="";
+    for(let s2=0;s2<maxPills;s2++){
+      const p=allPills[s2];
+      if(p&&p.type==="event"){const ev=p.item;const t=ev.time?ev.time.replace(" AM","a").replace(" PM","p"):"";pills+=`<div class="pill-slot" style="background:${rgba(ev.color,0.1)};border:1px solid ${rgba(ev.color,0.2)}"><span class="pill-time">${t}</span><span class="pill-title">${ev.title}</span></div>`;}
+      else if(p&&p.type==="reminder"){const r=p.item;const rtime=r.time?r.time.replace(" AM","a").replace(" PM","p"):"";pills+=`<div class="pill-slot" style="background:${rgba(r.color,0.08)};border:1px solid ${rgba(r.color,0.2)}"><span class="pill-time">${rtime?`${svgIcon("clock","mini-icon")} ${rtime}`:`${svgIcon("list","mini-icon")} ${r.list}`}</span><span class="pill-title">${r.title}</span></div>`;}
+      else{pills+=`<div class="pill-slot" style="background:transparent"></div>`;}
+    }
+    if(allPills.length>maxPills)pills+=`<div style="font-size:9px;color:var(--text-400);text-align:center;margin-top:2px">+${allPills.length-maxPills} more</div>`;
+
+    const card=document.createElement("div");
+    card.className=`day-card${isSel?" selected":""}`;
+    card.innerHTML=`<div style="margin-bottom:8px"><div class="card-label">${day.label}</div><div class="card-date">${dateStr}</div></div>${cardWeatherIcon(day.weathercode)}<span class="card-high" style="color:${tempColor(day.high)}">${day.high}°</span><span class="card-low">${day.low}°</span><div class="temp-bar-wrap"><div class="temp-bar" style="left:${bl}%;width:${bw}%"></div></div><div style="display:flex;justify-content:space-between;margin-top:3px"><span style="font-size:8px;color:var(--text-400)">${minAll}°</span><span style="font-size:8px;color:var(--text-400)">${maxAll}°</span></div><div class="walk-dot-wrap">${todDots}</div><div class="dot-label">AM · PM · EVE</div><div class="pills-area">${pills}</div>`;
+    card.addEventListener("click",()=>{sel=i;renderCards();renderDetail();renderStats();setTimeout(()=>document.getElementById("detail").scrollIntoView({behavior:"smooth",block:"nearest"}),30);});
+    row.appendChild(card);
+  });
+}
+
+function renderDetail(){
+  const day=DAYS[sel];
+  const evs=eventsFor(day.date);
+  const sportsForDay=sportsGamesForDate(day.date);
+  const evTitle=day.label==="Today"?"Today's Events":`${day.label} · Events`;
+
+  const todHTML=day.tod.map((t,ti)=>{
+    const ts=walkScore(t.precip,t.wind,t.temp,t.alert||false,t.weathercode??null);
+    const tr=ratingFromScore(ts,t.weathercode??null);
+    const felt=windChill(t.temp,t.wind);
+    const timeRange={Morning:"6am – 12pm",Afternoon:"12pm – 6pm",Evening:"6pm – 10pm"}[t.period]||"";
+    const scoreWord=ts>=90?"Excellent":ts>=75?"Great":ts>=50?"Decent":ts>=25?"Tough":"Skip";
+    const walkInsight=ts>=90?"Perfect for a walk":ts>=75?"Good conditions":ts>=50?"Still okay, dress for it":ts>=25?"Keep it short":"Stay cozy inside";
+    const prevTod=ti>0?day.tod[ti-1]:null;
+    const clothingHTML=clothingForTod(t,prevTod);
+
+    return`<div class="tod-card">
+<div class="tod-top-bar" style="background:${tr.bar}"></div>
+<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-top:4px">
+  <div><div class="tod-period">${t.period}</div><span class="tod-time">${timeRange}</span></div>
+  <div style="text-align:right"><div class="tod-temp-hero">${t.temp}°</div><div class="tod-feels">${felt<t.temp?`feels ${felt}°`:"&nbsp;"}</div></div>
+</div>
+<span class="tod-icon">${weatherIcon(t.weathercode,"card-icon")}</span>
+<div class="tod-cond-label">${t.condition}</div>
+<div class="tod-walk-insight">${walkInsight}</div>
+<div class="tod-paw">${pawMarks(tr.paw)}</div>
+<div class="tod-score-block" style="background:${tr.bar}14">
+  <div class="tod-score-label" style="color:${tr.bar}">Walk Score</div>
+  <div style="display:flex;align-items:baseline;gap:0">
+    <span class="tod-score-num" style="color:${tr.bar}">${ts}</span><span class="tod-score-slash" style="color:${tr.bar}"> /</span><span class="tod-score-denom" style="color:${tr.bar}">100</span>
+  </div>
+  <div class="tod-score-word" style="color:${tr.bar}">${scoreWord}</div>
+  <div class="tod-score-bar" style="background:${tr.bar}22"><div class="tod-score-bar-fill" style="width:${ts}%;background:${tr.bar}"></div></div>
+</div>
+<div class="tod-metric-cards">
+  <div class="tod-metric-card"><div class="tod-metric-card-label">Rain chance</div><div class="tod-metric-card-value metric-value">${svgIcon("drop")} ${t.precip}%</div></div>
+  <div class="tod-metric-card"><div class="tod-metric-card-label">Wind</div><div class="tod-metric-card-value metric-value">${svgIcon("wind")} ${t.wind} km/h</div><div class="tod-metric-card-sub">${windLabel(t.wind).label}</div></div>
+</div>
+${clothingHTML}
+</div>`;
+  }).join("");
+
+  const calHTML=evs.map(ev=>`<div class="event-pill" style="border-left-color:${ev.color}"><div style="flex:1;min-width:0"><div class="event-title">${ev.title}</div>${ev.time?`<div class="event-time">${svgIcon("clock","mini-icon")} ${ev.time}${ev.end?" – "+ev.end:""}</div>`:""}${ev.location?`<div class="event-loc">${svgIcon("pin","mini-icon")} ${mapsLink(ev.location,ev.location)}</div>`:""}</div><div class="event-cal" style="color:${ev.color}">${ev.calendar}</div></div>`).join("");
+  const cityHTML=cityEventsFor(day.date).map(ev=>{return`<div class="event-pill" style="border-left-color:${rgba(ev.color,0.8)}"><div style="flex:1;min-width:0"><div class="event-title">${namedIcon(ev.icon||"calendar")} ${ev.title}</div><div class="event-time">${svgIcon("clock","mini-icon")} ${ev.time} · ${svgIcon("pin","mini-icon")} ${mapsLink(ev.venue+' Toronto',ev.venue)}</div></div><div class="event-cal" style="color:${ev.color}">${ev.tag}</div></div>`;}).join("");
+  const sportsHTML=sportsForDay.map(g=>{
+    const team=teamLabelForGame(g);
+    const tm=new Date(g.sortDate).toLocaleTimeString("en-CA",{hour:"numeric",minute:"2-digit"});
+    return`<div class="event-pill" style="border-left-color:rgb(34,112,49)"><div style="flex:1;min-width:0"><div class="event-title">${namedIcon(g.icon||"ticket")} ${g.title}</div><div class="event-time">${svgIcon("clock","mini-icon")} ${tm}${g.venue?` · ${svgIcon("pin","mini-icon")} ${mapsLink(g.venue,g.venue)}`:""}</div></div><div class="event-cal" style="color:rgb(34,112,49)">${team}</div></div>`;
+  }).join("");
+  const overdueHTML=REMINDERS.filter(r=>r.overdue).map(r=>`<div class="reminder-pill-overdue"><div class="reminder-title-overdue">${svgIcon("alert","mini-icon")} ${r.title}</div><div class="reminder-list-tag" style="color:var(--danger)">${r.list}</div></div>`).join("");
+  const remHTML=remindersFor(day.date).filter(r=>!r.overdue).map(r=>`<div class="reminder-pill" style="border-left-color:${r.color}"><div class="reminder-title">${r.title}</div><div class="reminder-list-tag">${r.list}</div></div>`).join("");
+
+  const evSection=(calHTML||cityHTML||sportsHTML||overdueHTML||remHTML)
+    ?calHTML
+      +(cityHTML?`<div class="around-label">Around the City</div>${cityHTML}`:"")
+      +(sportsHTML?`<div class="around-label">Home Games</div>${sportsHTML}`:"")
+      +(overdueHTML?`<div class="reminder-overdue-divider">${svgIcon("alert","mini-icon")} Overdue</div>${overdueHTML}`:"")
+      +(remHTML?`<div class="reminder-divider">${svgIcon("list","mini-icon")} Reminders</div>${remHTML}`:"")
+    :`<div class="no-events">Nothing scheduled</div>`;
+
+  document.getElementById("detail").innerHTML=`<div class="tod-row">${todHTML}</div><div class="detail-grid"><div class="detail-col" style="grid-column:1/-1"><div class="detail-col-label">${svgIcon("calendar","title-icon")} ${evTitle}</div>${evSection}</div></div>`;
+}
+
+function renderStats(){
+  const day=DAYS[sel];
+  document.getElementById("stats-grid").innerHTML=[
+    {label:"Wind",         value:`${day.wind}`,   unit:`km/h · ${day.label}`,extra:windPill(day.wind)},
+    {label:"Precip Chance",value:`${day.precip}%`,unit:day.label,            extra:""},
+    {label:"UV Index",     value:`${day.uv}`,     unit:uvLabel(day.uv),      extra:""},
+    {label:"High / Low",   value:`${day.high}°`,  unit:`Low ${day.low}° · ${day.label}`,extra:""},
+  ].map(s=>`<div class="stat-box"><div class="stat-label">${s.label}</div><div class="stat-val">${s.value}</div><div class="stat-unit">${s.unit}${s.extra?` ${s.extra}`:""}</div></div>`).join("");
+}
+
+function renderSports(){
+  const col=document.getElementById("sports-col");
+  if(!col)return;
+  const games=laterGames(CITY_SPORTS);
+  if(!games.length){
+    col.innerHTML=`<div class="city-col"><div class="sport-empty">No later home games beyond the next 7 days.</div></div>`;
+    return;
+  }
+  col.innerHTML=`<div class="city-col">${games.map(s=>{
+    const leagueTag=s.tag?`<span class="sport-tag home-tag">${s.tag}</span>`:"";
+    return`<div class="sport-item"><div class="sport-item-title">${namedIcon(s.icon||"ticket")} ${s.title}</div><div class="sport-item-meta">${s.meta}</div>${s.venue?`<div class="sport-item-meta" style="margin-top:3px">${svgIcon("pin","mini-icon")} ${mapsLink(s.venue,s.venue)}</div>`:""}<div style="display:flex;align-items:center;gap:8px;margin-top:6px">${leagueTag}${s.tickets?`<a href="${s.tickets}" target="_blank" style="font-size:10px;color:var(--text-400);text-decoration:none;border-bottom:1px solid rgba(31,30,29,0.2);line-height:1">${svgIcon("ticket","mini-icon")} Tickets</a>`:""}</div></div>`;
+  }).join("")}</div>`;
+}
+function renderRaptors(){
+  const col=document.getElementById("raptors-col");
+  if(!col)return;
+  const games=laterGames(RAPTORS_GAMES);
+  if(!games.length){
+    col.innerHTML=`<div class="city-col"><div class="sport-empty">No later home games beyond the next 7 days.</div></div>`;
+    return;
+  }
+  col.innerHTML=`<div class="city-col">${games.map(s=>{
+    const leagueTag=s.tag?`<span class="sport-tag home-tag">${s.tag}</span>`:"";
+    return`<div class="sport-item"><div class="sport-item-title">${namedIcon(s.icon||"basketball")} ${s.title}</div><div class="sport-item-meta">${s.meta}</div>${s.venue?`<div class="sport-item-meta" style="margin-top:3px">${svgIcon("pin","mini-icon")} ${mapsLink(s.venue,s.venue)}</div>`:""}<div style="display:flex;align-items:center;gap:8px;margin-top:6px">${leagueTag}${s.tickets?`<a href="${s.tickets}" target="_blank" style="font-size:10px;color:var(--text-400);text-decoration:none;border-bottom:1px solid rgba(31,30,29,0.2);line-height:1">${svgIcon("ticket","mini-icon")} Tickets</a>`:""}</div></div>`;
+  }).join("")}</div>`;
+}
+function renderBlueJays(){
+  const col=document.getElementById("blue-jays-col");
+  if(!col)return;
+  const games=laterGames(BLUE_JAYS_GAMES);
+  if(!games.length){
+    col.innerHTML=`<div class="city-col"><div class="sport-empty">No later home games beyond the next 7 days.</div></div>`;
+    return;
+  }
+  col.innerHTML=`<div class="city-col">${games.map(s=>{
+    const leagueTag=s.tag?`<span class="sport-tag home-tag">${s.tag}</span>`:"";
+    return`<div class="sport-item"><div class="sport-item-title">${namedIcon(s.icon||"baseball")} ${s.title}</div><div class="sport-item-meta">${s.meta}</div>${s.venue?`<div class="sport-item-meta" style="margin-top:3px">${svgIcon("pin","mini-icon")} ${mapsLink(s.venue,s.venue)}</div>`:""}<div style="display:flex;align-items:center;gap:8px;margin-top:6px">${leagueTag}${s.tickets?`<a href="${s.tickets}" target="_blank" style="font-size:10px;color:var(--text-400);text-decoration:none;border-bottom:1px solid rgba(31,30,29,0.2);line-height:1">${svgIcon("ticket","mini-icon")} Tickets</a>`:""}</div></div>`;
+  }).join("")}</div>`;
+}
+function renderTempo(){
+  const col=document.getElementById("tempo-col");
+  if(!col)return;
+  const games=laterGames(TEMPO_GAMES);
+  if(!games.length){
+    col.innerHTML=`<div class="city-col"><div class="sport-empty">No later home games beyond the next 7 days.</div></div>`;
+    return;
+  }
+  col.innerHTML=`<div class="city-col">${games.map(s=>{
+    const leagueTag=s.tag?`<span class="sport-tag home-tag">${s.tag}</span>`:"";
+    return`<div class="sport-item"><div class="sport-item-title">${namedIcon(s.icon||"basketball")} ${s.title}</div><div class="sport-item-meta">${s.meta}</div>${s.venue?`<div class="sport-item-meta" style="margin-top:3px">${svgIcon("pin","mini-icon")} ${mapsLink(s.venue,s.venue)}</div>`:""}<div style="display:flex;align-items:center;gap:8px;margin-top:6px">${leagueTag}${s.tickets?`<a href="${s.tickets}" target="_blank" style="font-size:10px;color:var(--text-400);text-decoration:none;border-bottom:1px solid rgba(31,30,29,0.2);line-height:1">${svgIcon("ticket","mini-icon")} Tickets</a>`:""}</div></div>`;
+  }).join("")}</div>`;
+}
+function renderSceptres(){
+  const col=document.getElementById("sceptres-col");
+  if(!col)return;
+  const games=laterGames(SCEPTRES_GAMES);
+  if(!games.length){
+    col.innerHTML=`<div class="city-col"><div class="sport-empty">No later home games beyond the next 7 days.</div></div>`;
+    return;
+  }
+  col.innerHTML=`<div class="city-col">${games.map(s=>{
+    const leagueTag=s.tag?`<span class="sport-tag home-tag">${s.tag}</span>`:"";
+    return`<div class="sport-item"><div class="sport-item-title">${namedIcon(s.icon||"hockey")} ${s.title}</div><div class="sport-item-meta">${s.meta}</div>${s.venue?`<div class="sport-item-meta" style="margin-top:3px">${svgIcon("pin","mini-icon")} ${mapsLink(s.venue,s.venue)}</div>`:""}<div style="display:flex;align-items:center;gap:8px;margin-top:6px">${leagueTag}${s.tickets?`<a href="${s.tickets}" target="_blank" style="font-size:10px;color:var(--text-400);text-decoration:none;border-bottom:1px solid rgba(31,30,29,0.2);line-height:1">${svgIcon("ticket","mini-icon")} Tickets</a>`:""}</div></div>`;
+  }).join("")}</div>`;
+}
+function teamLabelForGame(g){
+  if(g.team)return g.team;
+  if(/^Toronto FC/i.test(g.title))return "TFC";
+  if(/^Raptors/i.test(g.title))return "Raptors";
+  if(/^Blue Jays/i.test(g.title))return "Blue Jays";
+  if(/^Tempo/i.test(g.title))return "Tempo";
+  if(/^Sceptres/i.test(g.title))return "Sceptres";
+  return "Toronto";
+}
+function localDateKey(d){return d.toLocaleDateString("en-CA")}
+function sportsGamesForDate(dateStr){
+  return [...CITY_SPORTS,...RAPTORS_GAMES,...BLUE_JAYS_GAMES,...TEMPO_GAMES,...SCEPTRES_GAMES]
+    .filter(g=>g.sortDate&&localDateKey(new Date(g.sortDate))===dateStr)
+    .sort((a,b)=>new Date(a.sortDate)-new Date(b.sortDate));
+}
+function nextWeekWindow(){
+  const now=new Date();
+  return {now,until:new Date(now.getTime()+7*24*60*60*1000)};
+}
+function isInNextWeek(g){
+  if(!g.sortDate)return false;
+  const {now,until}=nextWeekWindow();
+  const d=new Date(g.sortDate);
+  return d>=now&&d<=until;
+}
+function laterGames(games){return games.filter(g=>!isInNextWeek(g))}
+function renderSportsWeek(){
+  const col=document.getElementById("sports-week-col");
+  if(!col)return;
+  const games=[...CITY_SPORTS,...RAPTORS_GAMES,...BLUE_JAYS_GAMES,...TEMPO_GAMES,...SCEPTRES_GAMES]
+    .filter(isInNextWeek)
+    .sort((a,b)=>new Date(a.sortDate)-new Date(b.sortDate));
+  const meta=document.getElementById("sports-week-meta");
+  updateSportsRefreshMeta();
+  if(!games.length){
+    col.innerHTML=`<div class="city-col"><div class="sport-empty">No Toronto home games in the next 7 days.</div></div>`;
+    return;
+  }
+  col.innerHTML=`<div class="city-col">${games.map(s=>{
+    const team=teamLabelForGame(s);
+    return`<div class="sport-item"><div class="sport-item-title">${namedIcon(s.icon||"ticket")} ${s.title}</div><div class="sport-item-meta">${s.meta}</div>${s.venue?`<div class="sport-item-meta" style="margin-top:3px">${svgIcon("pin","mini-icon")} ${mapsLink(s.venue,s.venue)}</div>`:""}<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><span class="sport-tag home-tag">${team}</span>${s.tickets?`<a href="${s.tickets}" target="_blank" style="font-size:10px;color:var(--text-400);text-decoration:none;border-bottom:1px solid rgba(31,30,29,0.2);line-height:1">${svgIcon("ticket","mini-icon")} Tickets</a>`:""}</div></div>`;
+  }).join("")}</div>`;
+}
+function eventLocationName(e){
+  const loc=e.location;
+  if(!loc)return "";
+  if(typeof loc==="string")return loc;
+  if(Array.isArray(loc))return eventLocationName({location:loc[0]});
+  return loc.name||loc.address?.streetAddress||loc.address?.name||"";
+}
+function stripHtml(s){return (s||"").replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim()}
+function renderTorontoEventsWeek(){
+  const col=document.getElementById("toronto-events-col");
+  if(!col)return;
+  const now=new Date(),until=new Date(now.getTime()+7*24*60*60*1000);
+  const events=TORONTO_EVENTS
+    .filter(e=>e.sortDate&&new Date(e.sortDate)>=now&&new Date(e.sortDate)<=until)
+    .sort((a,b)=>new Date(a.sortDate)-new Date(b.sortDate))
+    .slice(0,8);
+  const meta=document.getElementById("toronto-events-meta");
+  if(meta){
+    const time=TORONTO_EVENTS.refreshedAt?` · refreshed ${TORONTO_EVENTS.refreshedAt.toLocaleTimeString("en-CA",{hour:"numeric",minute:"2-digit"})}`:"";
+    meta.textContent=(events.length?`${events.length} events`:"Nothing in the next week")+time;
+  }
+  if(!events.length){
+    col.innerHTML=`<div class="city-col"><div class="sport-empty">No city-listed events found in the next 7 days.</div></div>`;
+    return;
+  }
+  col.innerHTML=`<div class="city-col">${events.map(e=>{
+    const venue=e.venue||"Toronto";
+    const desc=e.description?`<div class="sport-item-meta" style="margin-top:3px">${e.description}</div>`:"";
+    return`<div class="sport-item"><div class="sport-item-title">${namedIcon("calendar")} ${e.title}</div><div class="sport-item-meta">${e.meta}</div>${venue?`<div class="sport-item-meta" style="margin-top:3px">${svgIcon("pin","mini-icon")} ${mapsLink(venue+" Toronto",venue)}</div>`:""}${desc}<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><span class="sport-tag home-tag">${e.tag||"Event"}</span>${e.url?`<a href="${e.url}" target="_blank" style="font-size:10px;color:var(--text-400);text-decoration:none;border-bottom:1px solid rgba(31,30,29,0.2);line-height:1">${svgIcon("ticket","mini-icon")} Details</a>`:""}</div></div>`;
+  }).join("")}</div>`;
+}
+function isConcertEvent(e){
+  const hay=`${e.title||""} ${e.venue||""} ${e.description||""}`.toLowerCase();
+  const musicWords=["concert","music","orchestra","symphony","jazz","violin","piano","quartet","choir","band","dj ","live performance","singer","songwriter","opera"];
+  const curatedVenues=["massey hall","td music hall","koerner hall","roy thomson hall","danforth music hall","history","budweiser stage","phoenix concert theatre","the great hall","the opera house","meridian hall","allied music centre","royal conservatory"];
+  return musicWords.some(w=>hay.includes(w))||curatedVenues.some(v=>hay.includes(v));
+}
+function decodeHtmlText(s){
+  const d=document.createElement("textarea");
+  d.innerHTML=s||"";
+  return d.value.replace(/\s+/g," ").trim();
+}
+function parseMonthDate(mon,day,year,time){
+  const t=(time||"7:00 PM").replace(/\./g,"").toUpperCase();
+  return new Date(`${mon} ${day}, ${year} ${t}`);
+}
+function parseVenueEventCards(html,venue,sourceUrl,concertOnly=false){
+  const text=decodeHtmlText(html.replace(/<script[\s\S]*?<\/script>/gi," ").replace(/<style[\s\S]*?<\/style>/gi," ").replace(/<[^>]+>/g," "));
+  const weekdayRe=/(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s*\/\s*([A-Z][a-z]{2,8})\s+(\d{1,2})\s*,\s*(20\d{2})\s+(.+?)\s+Event Starts\s+(\d{1,2}:\d{2}\s*(?:AM|PM))/g;
+  const compactRe=/(\d{1,2})\s+([A-Z][a-z]{2})\.\s+(20\d{2})\s+(.+?)\s+Event Starts\s+(\d{1,2}:\d{2}\s*(?:AM|PM))/g;
+  const sportsWords=/\b(raptors|maple leafs|marlies|tempo|sceptres|blue jays|playoffs?|vs\.?|tailgate)\b/i;
+  const nonConcertWords=/\b(stars on ice|wrestling|monster jam|tailgate)\b/i;
+  const out=[];
+  const add=(mon,day,year,rawTitle,time)=>{
+    let title=rawTitle
+      .replace(/\b(Buy Tickets|More Information|More Info|On Sale TBA|Reserve Your Table)\b.*$/i,"")
+      .replace(/^(Live Nation|Embrace Presents|MODO Live|Collective Concerts|FPC Live|AEG Presents)\s+/i,"")
+      .trim();
+    title=title.split(/\s{2,}/)[0].trim();
+    if(!title||title.length>120)return;
+    if(nonConcertWords.test(title))return;
+    if(concertOnly&&sportsWords.test(title))return;
+    const start=parseMonthDate(mon,day,year,time);
+    if(Number.isNaN(start.getTime()))return;
+    out.push({title,sortDate:start.toISOString(),meta:formatGameDate(start),venue,url:sourceUrl,description:"",tag:"Venue Listed"});
+  };
+  let m;
+  while((m=weekdayRe.exec(text)))add(m[1],m[2],m[3],m[4],m[5]);
+  while((m=compactRe.exec(text)))add(m[2],m[1],m[3],m[4],m[5]);
+  return out;
+}
+function renderConcertsWeek(){
+  const col=document.getElementById("concerts-col");
+  if(!col)return;
+  const now=new Date(),until=new Date(now.getTime()+7*24*60*60*1000);
+  const seen=new Set();
+  const concerts=[...VENUE_CONCERTS,...TORONTO_CONCERTS]
+    .filter(e=>e.sortDate&&new Date(e.sortDate)>=now&&new Date(e.sortDate)<=until)
+    .sort((a,b)=>new Date(a.sortDate)-new Date(b.sortDate))
+    .filter(e=>{
+      const key=`${e.title.toLowerCase()}|${localDateKey(new Date(e.sortDate))}|${(e.venue||"").toLowerCase()}`;
+      if(seen.has(key))return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0,8);
+  const meta=document.getElementById("concerts-meta");
+  if(meta){
+    const latest=[TORONTO_CONCERTS.refreshedAt,VENUE_CONCERTS.refreshedAt].filter(Boolean).sort((a,b)=>b-a)[0];
+    const time=latest?` · refreshed ${latest.toLocaleTimeString("en-CA",{hour:"numeric",minute:"2-digit"})}`:"";
+    meta.textContent=(concerts.length?`${concerts.length} concerts`:"Nothing in the next week")+time;
+  }
+  if(!concerts.length){
+    col.innerHTML=`<div class="city-col"><div class="sport-empty">No curated concerts found in the next 7 days.</div></div>`;
+    return;
+  }
+  col.innerHTML=`<div class="city-col">${concerts.map(e=>{
+    const venue=e.venue||"Toronto";
+    const desc=e.description?`<div class="sport-item-meta" style="margin-top:3px">${e.description}</div>`:"";
+    return`<div class="sport-item"><div class="sport-item-title">${namedIcon("ticket")} ${e.title}</div><div class="sport-item-meta">${e.meta}</div>${venue?`<div class="sport-item-meta" style="margin-top:3px">${svgIcon("pin","mini-icon")} ${mapsLink(venue+" Toronto",venue)}</div>`:""}${desc}<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><span class="sport-tag home-tag">Concert</span>${e.url?`<a href="${e.url}" target="_blank" style="font-size:10px;color:var(--text-400);text-decoration:none;border-bottom:1px solid rgba(31,30,29,0.2);line-height:1">${svgIcon("ticket","mini-icon")} Details</a>`:""}</div></div>`;
+  }).join("")}</div>`;
+}
+
+function setSportsMeta(text){const el=document.getElementById("sports-meta");if(el)el.textContent=text}
+function setRaptorsMeta(text){const el=document.getElementById("raptors-meta");if(el)el.textContent=text}
+function setBlueJaysMeta(text){const el=document.getElementById("blue-jays-meta");if(el)el.textContent=text}
+function setTempoMeta(text){const el=document.getElementById("tempo-meta");if(el)el.textContent=text}
+function setSceptresMeta(text){const el=document.getElementById("sceptres-meta");if(el)el.textContent=text}
+function markSportsRefreshed(team){
+  SPORTS_REFRESHED[team]=new Date();
+  updateSportsRefreshMeta();
+}
+function updateSportsRefreshMeta(){
+  const el=document.getElementById("sports-week-meta");
+  if(!el)return;
+  const latest=Object.values(SPORTS_REFRESHED).sort((a,b)=>b-a)[0];
+  const games=[...CITY_SPORTS,...RAPTORS_GAMES,...BLUE_JAYS_GAMES,...TEMPO_GAMES,...SCEPTRES_GAMES].filter(isInNextWeek);
+  const countText=games.length?`${games.length} home ${games.length===1?"game":"games"}`:"Nothing in the next week";
+  const timeText=latest?` · refreshed ${latest.toLocaleTimeString("en-CA",{hour:"numeric",minute:"2-digit"})}`:"";
+  el.textContent=countText+timeText;
+}
+function unfoldIcs(text){return text.replace(/\r?\n[ \t]/g,"").split(/\r?\n/)}
+function icsValue(line){const i=line.indexOf(":");return i>=0?line.slice(i+1):""}
+function cleanIcsText(v){return v.replace(/\\n/g," ").replace(/\\,/g,",").replace(/\\;/g,";").replace(/\\\\/g,"\\").trim()}
+function parseIcsDate(raw){
+  if(!raw)return null;
+  if(/^\d{8}$/.test(raw))return new Date(`${raw.slice(0,4)}-${raw.slice(4,6)}-${raw.slice(6,8)}T12:00:00`);
+  const m=raw.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})?(Z)?$/);
+  if(!m)return null;
+  const iso=`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]||"00"}${m[7]?"Z":""}`;
+  return new Date(iso);
+}
+function parseIcsEvents(text){
+  const lines=unfoldIcs(text),events=[];
+  let cur=null;
+  for(const line of lines){
+    if(line==="BEGIN:VEVENT"){cur={};continue}
+    if(line==="END:VEVENT"){if(cur)events.push(cur);cur=null;continue}
+    if(!cur)continue;
+    if(line.startsWith("SUMMARY"))cur.summary=cleanIcsText(icsValue(line));
+    else if(line.startsWith("LOCATION"))cur.location=cleanIcsText(icsValue(line));
+    else if(line.startsWith("DESCRIPTION"))cur.description=cleanIcsText(icsValue(line));
+    else if(line.startsWith("URL"))cur.url=cleanIcsText(icsValue(line));
+    else if(line.startsWith("DTSTART"))cur.start=parseIcsDate(icsValue(line));
+  }
+  return events.filter(e=>e.start&&!Number.isNaN(e.start.getTime()));
+}
+function isTfcHomeGame(ev){
+  const hay=`${ev.summary||""} ${ev.location||""} ${ev.description||""}`.toLowerCase();
+  return hay.includes("bmo field")||hay.includes("toronto fc vs")||/^toronto fc\s+(-|v|vs\.?)\s+/i.test(ev.summary||"");
+}
+function isRaptorsHomeGame(ev){
+  const hay=`${ev.summary||""} ${ev.location||""} ${ev.description||""}`.toLowerCase();
+  return hay.includes("scotiabank arena")||/@\s*raptors/i.test(ev.summary||"")||/^raptors\s+(-|v|vs\.?)\s+/i.test(ev.summary||"");
+}
+function isBlueJaysHomeGame(ev){
+  const hay=`${ev.summary||""} ${ev.location||""} ${ev.description||""}`.toLowerCase();
+  return hay.includes("rogers centre")||/@\s*blue jays/i.test(ev.summary||"")||/^blue jays\s+(-|v|vs\.?)\s+/i.test(ev.summary||"");
+}
+function opponentFromSummary(summary){
+  return (summary||"")
+    .replace(/^toronto fc\s+(-|v|vs\.?)\s+/i,"")
+    .replace(/\s+(-|v|vs\.?)\s+toronto fc$/i,"")
+    .replace(/\s+at\s+toronto fc$/i,"")
+    .trim()||"TBD";
+}
+function raptorsOpponentFromSummary(summary){
+  return (summary||"")
+    .replace(/\s+@\s+raptors.*$/i,"")
+    .replace(/^raptors\s+(-|v|vs\.?)\s+/i,"")
+    .replace(/\s+(-|v|vs\.?)\s+raptors.*$/i,"")
+    .replace(/\s+at\s+raptors.*$/i,"")
+    .replace(/\s+-\s+.*$/,"")
+    .replace(/\s+\|\s+.*$/,"")
+    .trim()||"TBD";
+}
+function blueJaysOpponentFromSummary(summary){
+  return (summary||"")
+    .replace(/\s+@\s+blue jays.*$/i,"")
+    .replace(/^blue jays\s+(-|v|vs\.?)\s+/i,"")
+    .replace(/\s+(-|v|vs\.?)\s+blue jays.*$/i,"")
+    .replace(/\s+at\s+blue jays.*$/i,"")
+    .replace(/\s+-\s+.*$/,"")
+    .replace(/\s+\|\s+.*$/,"")
+    .trim()||"TBD";
+}
+function cleanVenueName(venue,fallback){
+  const v=(venue||fallback||"").trim();
+  return v.replace(/^Rogers Centre$/i,"Rogers Centre");
+}
+function normalizeTempoVenue(venue){
+  const v=cleanVenueName(venue,"Coca-Cola Coliseum");
+  if(/coca/i.test(v))return "Coca-Cola Coliseum";
+  if(/scotiabank/i.test(v))return "Scotiabank Arena";
+  if(/bell centre/i.test(v))return "Bell Centre";
+  if(/rogers arena/i.test(v))return "Rogers Arena";
+  return v;
+}
+function normalizeSceptresVenue(venue){
+  const v=cleanVenueName(venue,"Coca-Cola Coliseum");
+  if(/coca/i.test(v))return "Coca-Cola Coliseum";
+  if(/scotiabank/i.test(v))return "Scotiabank Arena";
+  return v;
+}
+function formatGameDate(d){
+  return d.toLocaleDateString("en-CA",{weekday:"short",month:"short",day:"numeric"})
+    +" · "+d.toLocaleTimeString("en-CA",{hour:"numeric",minute:"2-digit"});
+}
+async function refreshTfcHomeGames(){
+  setSportsMeta("Refreshing on open…");
+  renderSports();
+  const url="https://raw.githubusercontent.com/jbaranski/majorleaguesoccer-ical/main/calendars/torontofc.ics";
+  try{
+    const res=await fetch(url,{cache:"no-store"});
+    if(!res.ok)throw new Error("HTTP "+res.status);
+    const now=new Date();
+    CITY_SPORTS=parseIcsEvents(await res.text())
+      .filter(ev=>ev.start>=now&&isTfcHomeGame(ev))
+      .sort((a,b)=>a.start-b.start)
+      .slice(0,5)
+      .map(ev=>({
+        icon:"soccer",
+        team:"TFC",
+        sortDate:ev.start.toISOString(),
+        title:`Toronto FC vs ${opponentFromSummary(ev.summary)}`,
+        meta:formatGameDate(ev.start),
+        venue:cleanVenueName(ev.location,"BMO Field"),
+        tag:"Home",
+        tickets:"https://www.ticketmaster.ca/toronto-fc-tickets/artist/1110670"
+      }));
+    markSportsRefreshed("TFC");
+    renderSports();
+    const laterCount=laterGames(CITY_SPORTS).length;
+    setSportsMeta(laterCount?`${laterCount} later home ${laterCount===1?"game":"games"}`:"No later home games");
+    renderDetail();
+    renderSportsWeek();
+  }catch(err){
+    console.error("TFC calendar fetch failed:",err);
+    CITY_SPORTS=[];
+    const col=document.getElementById("sports-col");
+    if(col)col.innerHTML=`<div class="city-col"><div class="sport-empty">Couldn’t refresh TFC home games right now.</div></div>`;
+    setSportsMeta("Refresh failed");
+    renderSportsWeek();
+  }
+}
+async function refreshRaptorsHomeGames(){
+  setRaptorsMeta("Refreshing on open…");
+  renderRaptors();
+  const url="https://ics.calendarlabs.com/1916/15707131/Toronto_Raptors_Schedule.ics";
+  try{
+    const res=await fetch(url,{cache:"no-store"});
+    if(!res.ok)throw new Error("HTTP "+res.status);
+    const now=new Date();
+    RAPTORS_GAMES=parseIcsEvents(await res.text())
+      .filter(ev=>ev.start>=now&&isRaptorsHomeGame(ev))
+      .sort((a,b)=>a.start-b.start)
+      .slice(0,5)
+      .map(ev=>({
+        icon:"basketball",
+        team:"Raptors",
+        sortDate:ev.start.toISOString(),
+        title:`Raptors vs ${raptorsOpponentFromSummary(ev.summary)}`,
+        meta:formatGameDate(ev.start),
+        venue:cleanVenueName(ev.location,"Scotiabank Arena"),
+        tag:"Home",
+        tickets:"https://www.ticketmaster.ca/toronto-raptors-tickets/artist/806034"
+      }));
+    markSportsRefreshed("Raptors");
+    renderRaptors();
+    const laterCount=laterGames(RAPTORS_GAMES).length;
+    setRaptorsMeta(laterCount?`${laterCount} later home ${laterCount===1?"game":"games"}`:"No later home games");
+    renderDetail();
+    renderSportsWeek();
+  }catch(err){
+    console.error("Raptors calendar fetch failed:",err);
+    RAPTORS_GAMES=[];
+    const col=document.getElementById("raptors-col");
+    if(col)col.innerHTML=`<div class="city-col"><div class="sport-empty">Couldn’t refresh Raptors home games right now.</div></div>`;
+    setRaptorsMeta("Refresh failed");
+    renderSportsWeek();
+  }
+}
+async function refreshBlueJaysHomeGames(){
+  setBlueJaysMeta("Refreshing on open…");
+  renderBlueJays();
+  const url="https://ics.calendarlabs.com/13/a3958f15/Toronto_Blue_Jays_-_MLB.ics";
+  try{
+    const res=await fetch(url,{cache:"no-store"});
+    if(!res.ok)throw new Error("HTTP "+res.status);
+    const now=new Date();
+    BLUE_JAYS_GAMES=parseIcsEvents(await res.text())
+      .filter(ev=>ev.start>=now&&isBlueJaysHomeGame(ev))
+      .sort((a,b)=>a.start-b.start)
+      .slice(0,5)
+      .map(ev=>({
+        icon:"baseball",
+        team:"Blue Jays",
+        sortDate:ev.start.toISOString(),
+        title:`Blue Jays vs ${blueJaysOpponentFromSummary(ev.summary)}`,
+        meta:formatGameDate(ev.start),
+        venue:cleanVenueName(ev.location,"Rogers Centre"),
+        tag:"Home",
+        tickets:"https://www.ticketmaster.ca/toronto-blue-jays-tickets/artist/806016"
+      }));
+    markSportsRefreshed("Blue Jays");
+    renderBlueJays();
+    const laterCount=laterGames(BLUE_JAYS_GAMES).length;
+    setBlueJaysMeta(laterCount?`${laterCount} later home ${laterCount===1?"game":"games"}`:"No later home games");
+    renderDetail();
+    renderSportsWeek();
+  }catch(err){
+    console.error("Blue Jays calendar fetch failed:",err);
+    BLUE_JAYS_GAMES=[];
+    const col=document.getElementById("blue-jays-col");
+    if(col)col.innerHTML=`<div class="city-col"><div class="sport-empty">Couldn’t refresh Blue Jays home games right now.</div></div>`;
+    setBlueJaysMeta("Refresh failed");
+    renderSportsWeek();
+  }
+}
+function parseEspnTempoGames(data){
+  const events=data.events||data.team?.events||data.schedule||[];
+  const games=[];
+  for(const ev of events){
+    const comp=ev.competitions?.[0]||ev.competition||{};
+    const competitors=comp.competitors||ev.competitors||[];
+    const home=competitors.find(c=>c.homeAway==="home");
+    const away=competitors.find(c=>c.homeAway==="away");
+    const isTempoHome=home&&(home.team?.abbreviation==="TOR"||/toronto tempo/i.test(home.team?.displayName||"")||/tempo/i.test(home.team?.shortDisplayName||""));
+    if(!isTempoHome)continue;
+    const start=new Date(ev.date||comp.date);
+    if(!start||Number.isNaN(start.getTime())||start<new Date())continue;
+    const opp=(away?.team?.shortDisplayName||away?.team?.displayName||"TBD").replace(/^Toronto Tempo$/i,"TBD");
+    games.push({
+      icon:"basketball",
+      team:"Tempo",
+      title:`Tempo vs ${opp}`,
+      sortDate:start.toISOString(),
+      meta:formatGameDate(start),
+      venue:normalizeTempoVenue(comp.venue?.fullName||ev.venue?.fullName||"Coca-Cola Coliseum"),
+      tag:"Home",
+      tickets:"https://www.ticketmaster.ca/toronto-tempo-tickets/artist/3373418"
+    });
+  }
+  return games.sort((a,b)=>new Date(a.sortDate)-new Date(b.sortDate)).slice(0,5);
+}
+async function refreshTempoHomeGames(){
+  setTempoMeta("Refreshing on open…");
+  renderTempo();
+  const url="https://site.web.api.espn.com/apis/site/v2/sports/basketball/wnba/teams/tor/schedule?region=us&lang=en&contentorigin=espn&season=2026";
+  try{
+    const res=await fetch(url,{cache:"no-store"});
+    if(!res.ok)throw new Error("HTTP "+res.status);
+    TEMPO_GAMES=parseEspnTempoGames(await res.json());
+    markSportsRefreshed("Tempo");
+    renderTempo();
+    const laterCount=laterGames(TEMPO_GAMES).length;
+    setTempoMeta(laterCount?`${laterCount} later home ${laterCount===1?"game":"games"}`:"No later home games");
+    renderDetail();
+    renderSportsWeek();
+  }catch(err){
+    console.error("Tempo schedule fetch failed:",err);
+    TEMPO_GAMES=[];
+    const col=document.getElementById("tempo-col");
+    if(col)col.innerHTML=`<div class="city-col"><div class="sport-empty">Couldn’t refresh Tempo home games right now.</div></div>`;
+    setTempoMeta("Refresh failed");
+    renderSportsWeek();
+  }
+}
+function parsePwhlSchedulePage(html){
+  const text=html.replace(/<script[\s\S]*?<\/script>/gi," ")
+    .replace(/<style[\s\S]*?<\/style>/gi," ")
+    .replace(/<[^>]+>/g," ")
+    .replace(/&nbsp;/g," ")
+    .replace(/&amp;/g,"&")
+    .replace(/\s+/g," ");
+  const teams={BOS:"Fleet",MIN:"Frost",MTL:"Victoire",NY:"Sirens",OTT:"Charge",SEA:"Torrent",TOR:"Sceptres",VAN:"Goldeneyes"};
+  const re=/([A-Z]{2,3})\s+([A-Z]{2,3})\s+(Sun|Mon|Tue|Wed|Thu|Fri|Sat),\s+([A-Z][a-z]{2})\s+(\d{1,2})\s+((?:\d{1,2}:\d{2}\s+(?:am|pm))|TBD)\s+EDT\s+([^|]+)\|\s+([A-Za-z .'-]+)/g;
+  const games=[];
+  let m;
+  while((m=re.exec(text))){
+    const away=m[1],home=m[2],mon=m[4],day=m[5],time=m[6],venue=m[7].trim(),city=m[8].trim();
+    if(home!=="TOR"||!/^Toronto$/i.test(city))continue;
+    const dateTime=time==="TBD"?`${mon} ${day}, 2026 12:00 PM`:`${mon} ${day}, 2026 ${time.toUpperCase()}`;
+    const start=new Date(dateTime);
+    if(Number.isNaN(start.getTime())||start<new Date())continue;
+    games.push({
+      icon:"hockey",
+      team:"Sceptres",
+      sortDate:start.toISOString(),
+      title:`Sceptres vs ${teams[away]||away}`,
+      meta:time==="TBD"?start.toLocaleDateString("en-CA",{weekday:"short",month:"short",day:"numeric"})+" · TBD":formatGameDate(start),
+      venue:normalizeSceptresVenue(venue),
+      tag:"Home",
+      tickets:"https://www.thepwhl.com/en/teams/toronto-sceptres/tickets"
+    });
+  }
+  return games.sort((a,b)=>new Date(a.sortDate)-new Date(b.sortDate)).slice(0,5);
+}
+async function refreshSceptresHomeGames(){
+  setSceptresMeta("Refreshing on open…");
+  renderSceptres();
+  const url="https://www.thepwhl.com/en/teams/toronto-sceptres/schedule-25-26";
+  try{
+    const res=await fetch(url,{cache:"no-store"});
+    if(!res.ok)throw new Error("HTTP "+res.status);
+    SCEPTRES_GAMES=parsePwhlSchedulePage(await res.text());
+    markSportsRefreshed("Sceptres");
+    renderSceptres();
+    const laterCount=laterGames(SCEPTRES_GAMES).length;
+    setSceptresMeta(laterCount?`${laterCount} later home ${laterCount===1?"game":"games"}`:"No later home games");
+    renderDetail();
+    renderSportsWeek();
+  }catch(err){
+    console.error("Sceptres schedule fetch failed:",err);
+    SCEPTRES_GAMES=[];
+    renderSceptres();
+    setSceptresMeta("No upcoming home games found");
+    renderSportsWeek();
+  }
+}
+async function refreshTorontoEvents(){
+  const meta=document.getElementById("toronto-events-meta");
+  if(meta)meta.textContent="Refreshing…";
+  renderTorontoEventsWeek();
+  const url="https://civictechto.github.io/toronto-opendata-festivalsandevents-jsonld-proxy/upcoming.jsonld";
+  try{
+    const res=await fetch(url,{cache:"no-store"});
+    if(!res.ok)throw new Error("HTTP "+res.status);
+    const data=await res.json();
+    TORONTO_EVENTS=(Array.isArray(data)?data:[])
+      .map(e=>{
+        const start=new Date(e.startDate);
+        if(Number.isNaN(start.getTime()))return null;
+        return {
+          title:e.name||"Untitled event",
+          sortDate:start.toISOString(),
+          meta:formatGameDate(start),
+          venue:eventLocationName(e),
+          description:stripHtml(e.description).slice(0,120),
+          url:e.url||"",
+          tag:"City Event"
+        };
+      })
+      .filter(Boolean);
+    TORONTO_EVENTS.refreshedAt=new Date();
+    TORONTO_CONCERTS=TORONTO_EVENTS.filter(isConcertEvent);
+    TORONTO_CONCERTS.refreshedAt=TORONTO_EVENTS.refreshedAt;
+    renderTorontoEventsWeek();
+    renderConcertsWeek();
+  }catch(err){
+    console.error("Toronto events fetch failed:",err);
+    TORONTO_EVENTS=[];
+    TORONTO_CONCERTS=[];
+    const col=document.getElementById("toronto-events-col");
+    if(col)col.innerHTML=`<div class="city-col"><div class="sport-empty">Couldn’t refresh Toronto events right now.</div></div>`;
+    const concertsCol=document.getElementById("concerts-col");
+    if(concertsCol)concertsCol.innerHTML=`<div class="city-col"><div class="sport-empty">Couldn’t refresh concerts right now.</div></div>`;
+    if(meta)meta.textContent="Refresh failed";
+    const concertsMeta=document.getElementById("concerts-meta");
+    if(concertsMeta)concertsMeta.textContent="Refresh failed";
+  }
+}
+function makeConcert(title,date,time,venue,url="",description=""){
+  const start=new Date(`${date}T${time}`);
+  if(Number.isNaN(start.getTime())) return null;
+  return {
+    title,
+    sortDate:start.toISOString(),
+    meta:formatGameDate(start),
+    venue,
+    url,
+    description,
+    tag:"Curated Venue"
+  };
+}
+
+// Robust venue concerts: manually curate key venue shows here.
+// Add real shows as makeConcert("Artist", "YYYY-MM-DD", "HH:mm", "Venue", "ticket/event URL", "optional note").
+// This avoids browser CORS issues and fragile venue-page scraping.
+const CURATED_VENUE_CONCERTS = [
+  // Scotiabank Arena
+  // makeConcert("Artist Name", "2026-05-01", "20:00", "Scotiabank Arena", "https://www.scotiabankarena.com/events", ""),
+
+  // Coca-Cola Coliseum
+  // makeConcert("Artist Name", "2026-05-02", "20:00", "Coca-Cola Coliseum", "https://www.coca-colacoliseum.com/events", ""),
+
+  // History
+  // makeConcert("Artist Name", "2026-05-03", "20:00", "History", "https://www.historytoronto.com/events", "")
+].filter(Boolean);
+
+async function refreshVenueConcerts(){
+  VENUE_CONCERTS = CURATED_VENUE_CONCERTS.slice();
+  VENUE_CONCERTS.refreshedAt = new Date();
+  renderConcertsWeek();
+}
+const _evSkipped=[];
+function _evDismiss(title){if(!_evSkipped.includes(title))_evSkipped.push(title);renderCityEvents();}
+function renderCityEvents(){
+  const visible=CITY_EVENTS.filter(e=>!_evSkipped.includes(e.title));
+  const btn=`position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-400);opacity:0.4;padding:2px 6px;line-height:1`;
+  const items=visible.map(e=>{
+    const sl=`https://www.google.com/search?q=${encodeURIComponent(e.title+' Toronto')}`;
+    const safe=e.title.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return`<div class="event-item" style="position:relative;padding-right:28px"><button class="_evx" data-t="${safe}" style="${btn}">✕</button><div class="event-item-title">${namedIcon(e.icon||"calendar")} <a href="${sl}" target="_blank" style="color:inherit;border-bottom:1px solid rgba(31,30,29,0.2);text-decoration:none">${e.title}</a></div><div class="event-item-meta">${e.meta}</div>${e.location?`<div class="event-item-meta" style="margin-top:3px">${svgIcon("pin","mini-icon")} ${mapsLink(e.location,e.location)}</div>`:""}<span class="event-tag" style="background:${rgba(e.tagColor,0.1)};color:${e.tagColor};border-color:${rgba(e.tagColor,0.25)}">${e.tag}</span></div>`;
+  }).join("");
+  const skippedBar=_evSkipped.length?`<div style="margin-top:14px;padding:10px 12px;background:rgba(207,92,54,0.07);border-radius:8px;border:1px solid rgba(207,92,54,0.2)"><div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgb(207,92,54);font-weight:700;margin-bottom:4px">Skipped — screenshot & send to Claude</div><div style="font-size:11px;color:var(--text-400)">${_evSkipped.join(', ')}</div></div>`:"";
+  document.getElementById("events-col").innerHTML=`<div class="city-col">${items}${skippedBar}</div>`;
+  document.querySelectorAll('._evx').forEach(b=>b.addEventListener('click',function(){_evDismiss(this.getAttribute('data-t'));}));
+}
+
+const _fdSkipped=[];
+function _fdDismiss(title){if(!_fdSkipped.includes(title))_fdSkipped.push(title);renderFood();}
+function renderFood(){
+  const catColors={"King West · Fort York":"rgb(180,80,0)","Liberty Village":"rgb(60,130,80)","Ossington · Trinity":"rgb(140,70,160)"};
+  const btn=`position:absolute;top:0;right:0;background:none;border:none;cursor:pointer;font-size:12px;color:var(--text-400);opacity:0.4;padding:2px 5px;line-height:1`;
+  const cols=[["King West · Fort York","Liberty Village"],["Ossington · Trinity"]].map(group=>`<div class="city-col">${group.map(cat=>{
+    const items=CITY_FOOD.filter(f=>f.category===cat&&!_fdSkipped.includes(f.title)),c=catColors[cat];
+    if(!items.length)return`<div class="food-cat-label" style="color:${c}">${cat}</div><div style="font-size:11px;color:var(--text-400);padding-bottom:8px">More picks on next refresh.</div>`;
+    return`<div class="food-cat-label" style="color:${c}">${cat}</div>`+items.map(f=>{
+      const nameLink=`https://www.google.com/search?q=${encodeURIComponent(f.query)}`;
+      const safe=f.title.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return`<div class="food-item" style="position:relative;padding-right:16px"><button class="_fdx" data-fd="${safe}" style="${btn}">✕</button><div class="food-item-name">${glyphIcon(f.icon,f.iconTone)} <a href="${nameLink}" target="_blank" style="color:inherit;border-bottom:1px solid rgba(31,30,29,0.2);text-decoration:none">${f.title}</a></div>${f.seasonal?`<div><span class="seasonal-badge">Seasonal pick</span></div>`:""}<div class="food-item-addr">${svgIcon("pin","mini-icon")} ${mapsLink(f.address+' Toronto',f.address)}</div><div class="food-item-vibe">${f.vibe}</div></div>`;
+    }).join("");
+  }).join("")}</div>`).join("");
+  const skippedBar=_fdSkipped.length?`<div style="margin-top:10px;padding:10px 12px;background:rgba(207,92,54,0.07);border-radius:8px;border:1px solid rgba(207,92,54,0.2);grid-column:1/-1"><div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgb(207,92,54);font-weight:700;margin-bottom:4px">Skipped — screenshot & send to Claude</div><div style="font-size:11px;color:var(--text-400)">${_fdSkipped.join(', ')}</div></div>`:"";
+  document.getElementById("food-col").innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${cols}${skippedBar}</div>`;
+  document.querySelectorAll('._fdx').forEach(b=>b.addEventListener('click',function(){_fdDismiss(this.getAttribute('data-fd'));}));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ██████  LIVE WEATHER — Open-Meteo fetch on every page load  ██████
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Open-Meteo API docs: https://open-meteo.com/en/docs
+// Free, no API key required, CORS-enabled for browser use.
+// Aggregation: max for hazards (wind/precip/weathercode), avg for temp.
+// Worst-case ensures one rainy hour in an otherwise cloudy window still surfaces.
+
+// WMO weathercode → emoji icon + human label
+function wcToIconCond(wc){
+  if(wc===0)                             return {icon:"clear",  cond:"Clear"};
+  if(wc===1||wc===2)                     return {icon:"partly", cond:"Partly cloudy"};
+  if(wc===3)                             return {icon:"cloud",  cond:"Cloudy"};
+  if(wc===45||wc===48)                   return {icon:"fog",    cond:"Fog"};
+  if(wc===51||wc===53||wc===55)          return {icon:"rain",   cond:"Drizzle"};
+  if(wc===56||wc===57)                   return {icon:"snow",   cond:"Freezing drizzle"};
+  if(wc===61||wc===63)                   return {icon:"rain",   cond:"Rain"};
+  if(wc===65)                            return {icon:"rain",   cond:"Heavy rain"};
+  if(wc===66||wc===67)                   return {icon:"snow",   cond:"Freezing rain"};
+  if(wc===71||wc===73)                   return {icon:"snow",   cond:"Snow"};
+  if(wc===75)                            return {icon:"snow",   cond:"Heavy snow"};
+  if(wc===77)                            return {icon:"snow",   cond:"Snow grains"};
+  if(wc===80||wc===81)                   return {icon:"rain",   cond:"Rain showers"};
+  if(wc===82)                            return {icon:"rain",   cond:"Heavy showers"};
+  if(wc===85||wc===86)                   return {icon:"snow",   cond:"Snow showers"};
+  if(wc===95)                            return {icon:"rain",   cond:"Thunderstorm"};
+  if(wc===96||wc===99)                   return {icon:"rain",   cond:"Thunderstorm w/ hail"};
+  return {icon:"unknown", cond:"Unknown"};
+}
+
+function avg(arr){ return arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : 0; }
+
+// Worst-case weathercode in an array — picks whichever hourly code carries
+// the biggest walk-score penalty.
+function worstWc(arr){
+  const rank = wc => {
+    if([95,96,99].includes(wc)) return 9;
+    if([65,75,82,86].includes(wc)) return 8;
+    if([61,71,80,85].includes(wc)) return 7;
+    if([63,73,81].includes(wc)) return 6;
+    if([45,48].includes(wc)) return 5;
+    if([51,53,55,77].includes(wc)) return 4;
+    if([56,57,66,67].includes(wc)) return 4;
+    if(wc===3) return 3;
+    if(wc===1||wc===2) return 2;
+    if(wc===0) return 1;
+    return 0;
+  };
+  let worst = arr[0]||0, worstRank = rank(worst);
+  for(const w of arr){ const r=rank(w); if(r>worstRank){worstRank=r;worst=w;} }
+  return worst;
+}
+
+function dayLabel(dateStr, idx){
+  if(idx===0) return "Today";
+  const d = new Date(dateStr+"T12:00:00");
+  return d.toLocaleDateString("en-CA",{weekday:"short"});
+}
+
+function buildDaysFromOpenMeteo(data){
+  const d = data.daily, h = data.hourly;
+  const out = [];
+  for(let i=0;i<d.time.length;i++){
+    const date = d.time[i];
+    const dailyWc = d.weathercode[i];
+    const dailyIconCond = wcToIconCond(dailyWc);
+    const hourIdx = [];
+    for(let j=0;j<h.time.length;j++){
+      if(h.time[j].startsWith(date)) hourIdx.push(j);
+    }
+    // Worst-case (max) for wind/precip/weathercode; avg for temp
+    const slot = (from, to) => {
+      const idx = hourIdx.filter(j=>{
+        const hr = parseInt(h.time[j].slice(11,13),10);
+        return hr>=from && hr<to;
+      });
+      const temp = avg(idx.map(j=>h.temperature_2m[j]));
+      const wind = Math.max(0, ...idx.map(j=>h.windspeed_10m[j]));
+      const precip = Math.max(0, ...idx.map(j=>h.precipitation_probability[j]||0));
+      const wc = worstWc(idx.map(j=>h.weathercode[j]));
+      const ic = wcToIconCond(wc);
+      return {temp,wind:Math.round(wind),precip:Math.round(precip),weathercode:wc,icon:ic.icon,condition:ic.cond};
+    };
+    const m = slot(6,12), a = slot(12,18), e = slot(18,22);
+    out.push({
+      date, label: dayLabel(date, i),
+      high: Math.round(d.temperature_2m_max[i]),
+      low:  Math.round(d.temperature_2m_min[i]),
+      condition: dailyIconCond.cond,
+      icon: dailyIconCond.icon,
+      precip: Math.round(d.precipitation_probability_max[i]||0),
+      wind:   Math.round(d.windspeed_10m_max[i]||0),
+      uv:     Math.round(d.uv_index_max[i]||0),
+      weathercode: dailyWc,
+      tod: [
+        {period:"Morning",  ...m},
+        {period:"Afternoon",...a},
+        {period:"Evening",  ...e},
+      ]
+    });
+  }
+  return out;
+}
+
+function buildCurrentFromOpenMeteo(data){
+  const h = data.hourly;
+  const now = new Date();
+  let closestIdx = 0, closestDelta = Infinity;
+  for(let i=0;i<h.time.length;i++){
+    const t = new Date(h.time[i]);
+    const delta = Math.abs(t - now);
+    if(delta < closestDelta){ closestDelta = delta; closestIdx = i; }
+  }
+  const temp = Math.round(h.temperature_2m[closestIdx]);
+  const wind = Math.round(h.windspeed_10m[closestIdx]);
+  const ic = wcToIconCond(h.weathercode[closestIdx]);
+  const stamp = now.toLocaleDateString("en-CA",{weekday:"short",month:"short",day:"numeric"})
+              + " · " + now.toLocaleTimeString("en-CA",{hour:"numeric",minute:"2-digit"});
+  return {
+    temp: `${temp}°C`,
+    cond: ic.cond,
+    wind: `${wind} km/h · Toronto`,
+    refreshed: stamp,
+    weathercode: h.weathercode[closestIdx]
+  };
+}
+
+async function bootDashboard(){
+  const url = "https://api.open-meteo.com/v1/forecast"
+    + "?latitude=43.64&longitude=-79.38"
+    + "&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,windspeed_10m_max,uv_index_max"
+    + "&hourly=temperature_2m,weathercode,precipitation_probability,windspeed_10m"
+    + "&timezone=America/Toronto"
+    + "&forecast_days=7";
+  try{
+    const res = await fetch(url);
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const data = await res.json();
+    DAYS = buildDaysFromOpenMeteo(data);
+    CURRENT = buildCurrentFromOpenMeteo(data);
+  }catch(err){
+    console.error("Open-Meteo fetch failed, using fallback:", err);
+    CURRENT.refreshed = "Live fetch failed — showing fallback · " + new Date().toLocaleString();
+  }
+
+  document.getElementById("cur-temp").textContent=CURRENT.temp;
+  document.getElementById("cur-cond").innerHTML=(CURRENT.weathercode==null?"":weatherIcon(CURRENT.weathercode,"current-weather-icon"))+CURRENT.cond;
+  document.getElementById("cur-wind").textContent=CURRENT.wind;
+  document.getElementById("footer").textContent="Open-Meteo · "+CURRENT.refreshed;
+
+  renderCards(); renderDetail(); renderStats(); renderSportsWeek(); renderTorontoEventsWeek(); renderConcertsWeek(); refreshTorontoEvents(); refreshVenueConcerts(); refreshTfcHomeGames(); refreshRaptorsHomeGames(); refreshBlueJaysHomeGames(); refreshTempoHomeGames(); refreshSceptresHomeGames();
+
+  const wl=windLabel(DAYS[0].wind);
+  const el=document.getElementById("cur-wind");
+  if(el&&!el.textContent.includes(wl.label)) el.textContent=el.textContent+" · "+wl.label;
+}
+
+bootDashboard();
+</script>
+</body>
+</html>
