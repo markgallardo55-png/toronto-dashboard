@@ -1198,7 +1198,7 @@ async function refreshSceptresHomeGames(){
           sortDate:start.toISOString(),
           meta:formatGameDate(start),
           venue:eventLocationName(e),
-          description:stripHtml(e.description).slice(0,120),
+          description:stripHtml(e.description).slice(0,240),
           url:e.url||"",
           tag:"City Event"
         };
