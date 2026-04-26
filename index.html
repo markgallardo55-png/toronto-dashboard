@@ -786,6 +786,17 @@ function toggleEventCard(card){
   const desc = card.querySelector(".event-item-desc");
   if(!desc) return;
 
+  const isExpanded = card.classList.contains("expanded");
+
+  if(isExpanded){
+    desc.textContent = desc.dataset.short;
+    card.classList.remove("expanded");
+  } else {
+    desc.textContent = desc.dataset.full;
+    card.classList.add("expanded");
+  }
+}
+
   const expanded = card.classList.toggle("expanded");
   desc.textContent = expanded ? desc.dataset.full : desc.dataset.short;
 }
