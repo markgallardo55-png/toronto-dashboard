@@ -984,7 +984,7 @@ async function refreshTfcHomeGames(){
         meta:formatGameDate(ev.start),
         venue:cleanVenueName(ev.location,"BMO Field"),
         tag:"Home",
-        tickets:"https://www.ticketmaster.ca/toronto-fc-tickets/artist/1110670"
+        tickets:"tickets: "https://www.ticketmaster.ca/search?q=Toronto%20FC""
       }));
     markSportsRefreshed("TFC");
     renderSports();
@@ -1021,7 +1021,7 @@ async function refreshRaptorsHomeGames(){
         meta:formatGameDate(ev.start),
         venue:cleanVenueName(ev.location,"Scotiabank Arena"),
         tag:"Home",
-        tickets:"https://www.ticketmaster.ca/toronto-raptors-tickets/artist/806034"
+        tickets:"tickets: "https://www.ticketmaster.ca/search?q=Toronto%20Raptors""
       }));
     markSportsRefreshed("Raptors");
     renderRaptors();
@@ -1149,7 +1149,7 @@ function parsePwhlSchedulePage(html){
       meta:time==="TBD"?start.toLocaleDateString("en-CA",{weekday:"short",month:"short",day:"numeric"})+" · TBD":formatGameDate(start),
       venue:normalizeSceptresVenue(venue),
       tag:"Home",
-      tickets:"https://www.thepwhl.com/en/teams/toronto-sceptres/tickets"
+      tickets:"tickets: "tickets: "https://www.ticketmaster.ca/search?q=Toronto%20Sceptres"
     });
   }
   return games.sort((a,b)=>new Date(a.sortDate)-new Date(b.sortDate)).slice(0,5);
