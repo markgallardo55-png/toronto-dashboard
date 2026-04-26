@@ -1175,20 +1175,24 @@ async function refreshSceptresHomeGames(){
     setSceptresMeta("No upcoming home games found");
     renderSportsWeek();
   }
-}
-async function refreshTorontoEvents(){
+}async function refreshTorontoEvents(){
   const meta=document.getElementById("toronto-events-meta");
   if(meta)meta.textContent="Refreshing…";
   renderTorontoEventsWeek();
+
   const url="https://civictechto.github.io/toronto-opendata-festivalsandevents-jsonld-proxy/upcoming.jsonld";
+
   try{
     const res=await fetch(url,{cache:"no-store"});
     if(!res.ok)throw new Error("HTTP "+res.status);
+
     const data=await res.json();
+
     TORONTO_EVENTS=(Array.isArray(data)?data:[])
       .map(e=>{
         const start=new Date(e.startDate);
         if(Number.isNaN(start.getTime()))return null;
+
         return {
           title:e.name||"Untitled event",
           sortDate:start.toISOString(),
@@ -1200,24 +1204,31 @@ async function refreshTorontoEvents(){
         };
       })
       .filter(Boolean);
+
     const refreshedAt = new Date();
 
-TORONTO_CONCERTS = TORONTO_EVENTS.filter(isConcertEvent);
-TORONTO_EVENTS = TORONTO_EVENTS.filter(e => !isConcertEvent(e));
+    TORONTO_CONCERTS = TORONTO_EVENTS.filter(isConcertEvent);
+    TORONTO_EVENTS = TORONTO_EVENTS.filter(e => !isConcertEvent(e));
 
-TORONTO_EVENTS.refreshedAt = refreshedAt;
-TORONTO_CONCERTS.refreshedAt = refreshedAt;
+    TORONTO_EVENTS.refreshedAt = refreshedAt;
+    TORONTO_CONCERTS.refreshedAt = refreshedAt;
+
     renderTorontoEventsWeek();
     renderConcertsWeek();
+
   }catch(err){
     console.error("Toronto events fetch failed:",err);
     TORONTO_EVENTS=[];
     TORONTO_CONCERTS=[];
+
     const col=document.getElementById("toronto-events-col");
     if(col)col.innerHTML=`<div class="city-col"><div class="sport-empty">Couldn’t refresh Toronto events right now.</div></div>`;
+
     const concertsCol=document.getElementById("concerts-col");
     if(concertsCol)concertsCol.innerHTML=`<div class="city-col"><div class="sport-empty">Couldn’t refresh concerts right now.</div></div>`;
+
     if(meta)meta.textContent="Refresh failed";
+
     const concertsMeta=document.getElementById("concerts-meta");
     if(concertsMeta)concertsMeta.textContent="Refresh failed";
   }
