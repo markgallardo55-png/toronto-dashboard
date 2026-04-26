@@ -1219,21 +1219,15 @@ async function refreshTorontoEvents(){
   }
 }
 async function fetchVenueText(url){
-  const direct=async()=>{
-    const res=await fetch(url,{cache:"no-store"});
-    if(!res.ok)throw new Error(`HTTP ${res.status}`);
-    return res.text();
-  };
-  const viaAllOrigins=async()=>{
-    const proxy=`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-    const res=await fetch(proxy,{cache:"no-store"});
-    if(!res.ok)throw new Error(`Proxy HTTP ${res.status}`);
-    return res.text();
-  };
-  try{return await direct();}
-  catch(err){
-    console.warn("Direct venue fetch failed, retrying through CORS proxy:",url,err);
-    return viaAllOrigins();
+  const proxy = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+
+  try{
+    const res = await fetch(proxy,{cache:"no-store"});
+    if(!res.ok) throw new Error("Proxy HTTP " + res.status);
+    return await res.text();
+  }catch(err){
+    console.error("Venue proxy fetch failed:", url, err);
+    return "";
   }
 }
 
@@ -1243,19 +1237,14 @@ async function refreshVenueConcerts(){
     {venue:"Coca-Cola Coliseum",url:"https://www.coca-colacoliseum.com/events",concertOnly:true},
     {venue:"History",url:"https://www.historytoronto.com/events",concertOnly:false}
   ];
-  const meta=document.getElementById("concerts-meta");
-  if(meta)meta.textContent="Refreshing venue concerts…";
-  renderConcertsWeek();
+
   try{
     const groups=await Promise.all(sources.map(async src=>{
-      try{
-        const html=await fetchVenueText(src.url);
-        return parseVenueEventCards(html,src.venue,src.url,src.concertOnly);
-      }catch(err){
-        console.error(`${src.venue} concert fetch failed:`,err);
-        return [];
-      }
+      const html=await fetchVenueText(src.url);
+      if(!html) return [];
+      return parseVenueEventCards(html,src.venue,src.url,src.concertOnly);
     }));
+
     VENUE_CONCERTS=groups.flat();
     VENUE_CONCERTS.refreshedAt=new Date();
     renderConcertsWeek();
@@ -1266,7 +1255,6 @@ async function refreshVenueConcerts(){
     renderConcertsWeek();
   }
 }
-
 const _evSkipped=[];
 function _evDismiss(title){if(!_evSkipped.includes(title))_evSkipped.push(title);renderCityEvents();}
 function renderCityEvents(){
