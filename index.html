@@ -764,31 +764,6 @@ function eventLocationName(e){
   return loc.name||loc.address?.streetAddress||loc.address?.name||"";
 }
 function stripHtml(s){return (s||"").replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim()}
-  function smartShortDesc(text, limit=220){
-  const clean = stripHtml(text || "");
-  if(clean.length <= limit) return clean;
-
-  const cut = clean.lastIndexOf(".", limit);
-  if(cut > 80) return clean.slice(0, cut + 1);
-
-  return clean.slice(0, limit).trim() + "…";
-}
-
-function escapeAttr(s){
-  return String(s || "")
-    .replace(/&/g,"&amp;")
-    .replace(/"/g,"&quot;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;");
-}
-
-function toggleEventCard(card){
-  const desc = card.querySelector(".event-item-desc");
-  if(!desc) return;
-
-  const expanded = card.classList.toggle("expanded");
-  desc.textContent = expanded ? desc.dataset.full : desc.dataset.short;
-}
 function renderTorontoEventsWeek(){
   const col=document.getElementById("toronto-events-col");
   if(!col)return;
@@ -808,10 +783,8 @@ function renderTorontoEventsWeek(){
   }
   col.innerHTML=`<div class="city-col">${events.map(e=>{
     const venue=e.venue||"Toronto";
-    const desc=e.description
-  ? `<div class="event-item-desc" data-short="${escapeAttr(e.description)}" data-full="${escapeAttr(e.fullDescription || e.description)}">${e.description}</div>`
-  : "";
-    return`<div class="sport-item event-item" onclick="toggleEventCard(this)"><div class="sport-item-title">${namedIcon("calendar")} ${e.title}</div><div class="sport-item-meta">${e.meta}</div>${venue?`<div class="sport-item-meta" style="margin-top:3px">${svgIcon("pin","mini-icon")} ${mapsLink(venue+" Toronto",venue)}</div>`:""}${desc}<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><span class="sport-tag home-tag">${e.tag||"Event"}</span>${e.url?`<a href="${e.url}" target="_blank" style="font-size:10px;color:var(--text-400);text-decoration:none;border-bottom:1px solid rgba(31,30,29,0.2);line-height:1">${svgIcon("ticket","mini-icon")} Details</a>`:""}</div></div>`;
+    const desc=e.description?`<div class="sport-item-meta" style="margin-top:3px">${e.description}</div>`:"";
+    return`<div class="sport-item"><div class="sport-item-title">${namedIcon("calendar")} ${e.title}</div><div class="sport-item-meta">${e.meta}</div>${venue?`<div class="sport-item-meta" style="margin-top:3px">${svgIcon("pin","mini-icon")} ${mapsLink(venue+" Toronto",venue)}</div>`:""}${desc}<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><span class="sport-tag home-tag">${e.tag||"Event"}</span>${e.url?`<a href="${e.url}" target="_blank" style="font-size:10px;color:var(--text-400);text-decoration:none;border-bottom:1px solid rgba(31,30,29,0.2);line-height:1">${svgIcon("ticket","mini-icon")} Details</a>`:""}</div></div>`;
   }).join("")}</div>`;
 }
 function isConcertEvent(e){
@@ -1225,7 +1198,7 @@ async function refreshSceptresHomeGames(){
           sortDate:start.toISOString(),
           meta:formatGameDate(start),
           venue:eventLocationName(e),
-          description:stripHtml(e.description).slice(0,240),
+          description:stripHtml(e.description).slice(0,120),
           url:e.url||"",
           tag:"City Event"
         };
