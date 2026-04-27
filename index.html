@@ -429,9 +429,9 @@ function walkScore(precip,wind,temp,alert,wc){
     else if([63,73,81].includes(wc))s-=20;
     else if([51,53,55,77].includes(wc))s-=12;
     else if([45,48].includes(wc))s-=15;
-    else if(wc===3)s-=5;   // Cloudy
-    else if(wc===2)s-=4;   // Partly cloudy
-    else if(wc===1)s-=2;   // Mostly clear
+    else if(wc===3)s-=10;  // Cloudy
+    else if(wc===2)s-=7;   // Partly cloudy
+    else if(wc===1)s-=4;   // Mostly clear
   } else {
     if(precip>=80)s-=40;
     else if(precip>=60)s-=25;
@@ -455,16 +455,19 @@ function walkScore(precip,wind,temp,alert,wc){
     else if(wind>=35)s-=15;
     else if(wind>=25)s-=8;
     else if(wind>=18)s-=3;
+  }
 
-    const wetCodesForBonus=[45,48,51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86,95,96,99];
-    const isWetForBonus = wc!=null && wetCodesForBonus.includes(wc);
+  // 100 should mean truly perfect: clear, dry, mild, low wind
+  const isPerfect =
+    wc === 0 &&
+    precip === 0 &&
+    temp >= 10 &&
+    temp <= 22 &&
+    wind <= 15 &&
+    !alert;
 
-    // NEW: block bonus if cloudy
-    const isCloudyForBonus = wc===2 || wc===3;
-
-    if(temp>=10 && temp<=22 && !isWetForBonus && !isCloudyForBonus && precip<30){
-      s+=8;
-    }
+  if(!isPerfect && s >= 100){
+    s = 99;
   }
 
   return Math.max(0,Math.min(100,s));
