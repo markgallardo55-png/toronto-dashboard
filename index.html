@@ -429,9 +429,9 @@ function walkScore(precip,wind,temp,alert,wc){
     else if([63,73,81].includes(wc))s-=20;
     else if([51,53,55,77].includes(wc))s-=12;
     else if([45,48].includes(wc))s-=15;
-    else if(wc===3)s-=10;  // Cloudy
-    else if(wc===2)s-=7;   // Partly cloudy
-    else if(wc===1)s-=4;   // Mostly clear
+    else if(wc===3)s-=10;
+    else if(wc===2)s-=7;
+    else if(wc===1)s-=4;
   } else {
     if(precip>=80)s-=40;
     else if(precip>=60)s-=25;
@@ -441,29 +441,27 @@ function walkScore(precip,wind,temp,alert,wc){
 
   const felt=windChill(temp,wind);
 
-  if(temp<=10){
-    if(felt<=-20)s-=45;
-    else if(felt<=-15)s-=35;
-    else if(felt<=-10)s-=22;
-    else if(felt<=-5)s-=12;
-    else if(felt<=-2)s-=6;
-
-    if(wind>=50)s-=10;
-    else if(wind>=35)s-=5;
-  } else {
-    if(wind>=50)s-=25;
-    else if(wind>=35)s-=15;
-    else if(wind>=25)s-=8;
-    else if(wind>=18)s-=3;
+  if(felt<=10){
+    if(felt<=-20)s-=50;
+    else if(felt<=-15)s-=40;
+    else if(felt<=-10)s-=28;
+    else if(felt<=-5)s-=18;
+    else if(felt<=0)s-=10;
+    else if(felt<=5)s-=5;
   }
 
-  // 100 should mean truly perfect: clear, dry, mild, low wind
+  if(wind>=50)s-=25;
+  else if(wind>=35)s-=18;
+  else if(wind>=25)s-=12;
+  else if(wind>=18)s-=6;
+  else if(wind>=12)s-=2;
+
   const isPerfect =
     wc === 0 &&
     precip === 0 &&
-    temp >= 10 &&
-    temp <= 22 &&
-    wind <= 15 &&
+    felt >= 10 &&
+    felt <= 22 &&
+    wind <= 12 &&
     !alert;
 
   if(!isPerfect && s >= 100){
