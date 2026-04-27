@@ -421,12 +421,11 @@ function namedIcon(name){
 
 function walkScore(precip,wind,temp,alert,wc){
   let s=100;if(alert)s-=50;
-  if(wc!=null){if([95,96,99].includes(wc))s-=60;else if([65,75,82,86].includes(wc))s-=45;else if([61,71,80,85].includes(wc))s-=30;else if([63,73,81].includes(wc))s-=20;else if([51,53,55,77].includes(wc))s-=12;else if([45,48].includes(wc))s-=15;else if(wc===3)s-=5;}
+  if(wc!=null){if([95,96,99].includes(wc))s-=60;else if([65,75,82,86].includes(wc))s-=45;else if([61,71,80,85].includes(wc))s-=30;else if([63,73,81].includes(wc))s-=20;else if([51,53,55,77].includes(wc))s-=12;else if([45,48].includes(wc))s-=15;else if(wc===3)s-=5;else if(wc===2)s-=4;else if(wc===1)s-=2;}
   else{if(precip>=80)s-=40;else if(precip>=60)s-=25;else if(precip>=40)s-=15;else if(precip>=20)s-=8;}
   const felt=windChill(temp,wind);
   if(temp<=10){if(felt<=-20)s-=45;else if(felt<=-15)s-=35;else if(felt<=-10)s-=22;else if(felt<=-5)s-=12;else if(felt<=-2)s-=6;if(wind>=50)s-=10;else if(wind>=35)s-=5;}
   else{if(wind>=50)s-=25;else if(wind>=35)s-=15;else if(wind>=25)s-=8;else if(wind>=18)s-=3;
-    // Pleasant temp bonus only if it's not raining/snowing/foggy
     const wetCodesForBonus=[45,48,51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86,95,96,99];
     const isWetForBonus = wc!=null && wetCodesForBonus.includes(wc);
     if(temp>=10&&temp<=22&&!isWetForBonus&&precip<30)s+=8;
