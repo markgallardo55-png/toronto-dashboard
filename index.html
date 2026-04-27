@@ -984,7 +984,7 @@ async function refreshTfcHomeGames(){
         meta:formatGameDate(ev.start),
         venue:cleanVenueName(ev.location,"BMO Field"),
         tag:"Home",
-        tickets:"tickets: "https://www.ticketmaster.ca/search?q=Toronto%20FC""
+        tickets:"https://www.ticketmaster.ca/toronto-fc-tickets/artist/1110670"
       }));
     markSportsRefreshed("TFC");
     renderSports();
@@ -1021,7 +1021,7 @@ async function refreshRaptorsHomeGames(){
         meta:formatGameDate(ev.start),
         venue:cleanVenueName(ev.location,"Scotiabank Arena"),
         tag:"Home",
-        tickets:"tickets: "https://www.ticketmaster.ca/search?q=Toronto%20Raptors""
+        tickets:"https://www.ticketmaster.ca/toronto-raptors-tickets/artist/806034"
       }));
     markSportsRefreshed("Raptors");
     renderRaptors();
@@ -1058,7 +1058,7 @@ async function refreshBlueJaysHomeGames(){
         meta:formatGameDate(ev.start),
         venue:cleanVenueName(ev.location,"Rogers Centre"),
         tag:"Home",
-        tickets:"https://www.ticketmaster.ca/search?q=Toronto%20Blue%20Jays"
+        tickets:"https://www.ticketmaster.ca/toronto-blue-jays-tickets/artist/806016"
       }));
     markSportsRefreshed("Blue Jays");
     renderBlueJays();
@@ -1149,7 +1149,7 @@ function parsePwhlSchedulePage(html){
       meta:time==="TBD"?start.toLocaleDateString("en-CA",{weekday:"short",month:"short",day:"numeric"})+" · TBD":formatGameDate(start),
       venue:normalizeSceptresVenue(venue),
       tag:"Home",
-      tickets:"tickets: "tickets: "https://www.ticketmaster.ca/search?q=Toronto%20Sceptres"
+      tickets:"https://www.thepwhl.com/en/teams/toronto-sceptres/tickets"
     });
   }
   return games.sort((a,b)=>new Date(a.sortDate)-new Date(b.sortDate)).slice(0,5);
@@ -1198,7 +1198,7 @@ async function refreshSceptresHomeGames(){
           sortDate:start.toISOString(),
           meta:formatGameDate(start),
           venue:eventLocationName(e),
-          description:stripHtml(e.description || ""),
+          description:stripHtml(e.description).slice(0,120),
           url:e.url||"",
           tag:"City Event"
         };
