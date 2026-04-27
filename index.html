@@ -764,6 +764,15 @@ function eventLocationName(e){
   return loc.name||loc.address?.streetAddress||loc.address?.name||"";
 }
 function stripHtml(s){return (s||"").replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim()}
+  function smartShortDesc(text, limit=180){
+  const clean = stripHtml(text || "");
+  if(clean.length <= limit) return clean;
+
+  const cut = clean.lastIndexOf(".", limit);
+  if(cut > 80) return clean.slice(0, cut + 1);
+
+  return clean.slice(0, limit).trim() + "…";
+}
 function renderTorontoEventsWeek(){
   const col=document.getElementById("toronto-events-col");
   if(!col)return;
@@ -1198,7 +1207,7 @@ async function refreshSceptresHomeGames(){
           sortDate:start.toISOString(),
           meta:formatGameDate(start),
           venue:eventLocationName(e),
-          description:stripHtml(e.description || ""),
+          description:smartShortDesc(e.description,180),
           url:e.url||"",
           tag:"City Event"
         };
