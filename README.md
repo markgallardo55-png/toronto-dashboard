@@ -2,7 +2,7 @@
 
 A single-file morning-briefing dashboard for Toronto — live weather, sports, events, and coffee picks, rendered in one page.
 
-🔗 **Live:** [toronto-dashboard.netlify.app](https://toronto-dashboard.netlify.app/)
+🔗 **Live:** [markgallardo55-png.github.io/toronto-dashboard](https://markgallardo55-png.github.io/toronto-dashboard/)
 
 ## What it does
 
@@ -27,7 +27,7 @@ Open `index.html` directly in a browser — that's it.
 
 ## Deploy
 
-Hosted on Netlify with auto-deploy from this repo's `main` branch. Every push triggers a rebuild; changes go live in ~30 seconds.
+Hosted on GitHub Pages, serving directly from this repo's `main` branch. Every push goes live within a minute or two.
 
 ## Data sources
 
