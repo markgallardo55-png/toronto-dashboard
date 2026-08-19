@@ -48,6 +48,27 @@ body{font-family:var(--font);background:#faf9f5 !important;color:#141413 !import
 .wx-snow .wx-flake{color:#7fb7df}.wx-snow .wx-flake:nth-child(2){left:12px}.wx-snow .wx-flake:nth-child(3){left:22px}.wx-snow .wx-flake:nth-child(4){left:31px}
 .wx-fog .wx-cloud{top:8px}
 .wx-fog-line{position:absolute;left:7px;right:5px;height:2px;border-radius:2px;background:#b9bdbc;opacity:.75}.wx-fog-line:nth-child(2){top:26px}.wx-fog-line:nth-child(3){top:31px;width:24px;left:12px}
+@media (prefers-reduced-motion:no-preference){
+.wx-sun{animation:wxSunPulse 3s ease-in-out infinite}
+.wx-sun::before{animation:wxSunSpin 16s linear infinite}
+.wx-cloud{animation:wxCloudDrift 4s ease-in-out infinite}
+.wx-partly .wx-cloud{animation-name:wxCloudDriftPartly}
+.wx-rain .wx-drop{animation:wxDropFall 1s linear infinite}
+.wx-rain .wx-drop:nth-child(3){animation-delay:.25s}
+.wx-rain .wx-drop:nth-child(4){animation-delay:.5s}
+.wx-snow .wx-flake{animation:wxFlakeFall 3s linear infinite}
+.wx-snow .wx-flake:nth-child(3){animation-delay:1s}
+.wx-snow .wx-flake:nth-child(4){animation-delay:2s}
+.wx-fog-line{animation:wxFogDrift 3.5s ease-in-out infinite}
+.wx-fog-line:nth-child(3){animation-delay:.6s}
+}
+@keyframes wxSunPulse{0%,100%{box-shadow:0 0 0 1px rgba(196,128,22,.12),0 0 12px rgba(245,166,35,.28)}50%{box-shadow:0 0 0 1px rgba(196,128,22,.12),0 0 18px rgba(245,166,35,.42)}}
+@keyframes wxSunSpin{to{transform:rotate(360deg)}}
+@keyframes wxCloudDrift{0%,100%{transform:translateX(0)}50%{transform:translateX(2px)}}
+@keyframes wxCloudDriftPartly{0%,100%{transform:scale(.9) translateX(0)}50%{transform:scale(.9) translateX(2px)}}
+@keyframes wxDropFall{0%{transform:translateY(-2px);opacity:0}30%{opacity:1}100%{transform:translateY(6px);opacity:0}}
+@keyframes wxFlakeFall{0%{transform:translate(0,-2px);opacity:0}20%{opacity:1}100%{transform:translate(2px,8px);opacity:0}}
+@keyframes wxFogDrift{0%,100%{transform:translateX(0)}50%{transform:translateX(3px)}}
 .icon-svg{width:1em;height:1em;display:inline-block;vertical-align:-.14em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 .inline-icon{display:inline-flex;align-items:center;justify-content:center;width:1.15em;height:1.15em;color:currentColor;vertical-align:-.18em}
 .mini-icon{font-size:12px;color:var(--text-400);margin-right:4px}
